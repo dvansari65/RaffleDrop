@@ -1,88 +1,95 @@
 # RaffleDrop
 
-This is a Next.js app containing:
+🎯 LuckyBid – Decentralized Raffle Marketplace (Solana • Switchboard VRF • Next.js)
+LuckyBid is a decentralized raffle-style marketplace where anyone can sell a real-world or digital product, and buyers gamble for a chance to win it at a fraction of the cost.
+Once the minimum funding goal (tickets sold) is met, a verifiably-random winner is selected using Switchboard VRF — ensuring fairness, transparency, and zero-trust execution.
+💰 Seller is guaranteed full selling price
+🎟️ Buyers pay only a small entry fee
+⚖️ Winner is chosen openly & fairly, on-chain
+📜 Optional Smart-Legal Contract prevents seller from listing product elsewhere
 
-- Tailwind CSS setup for styling
-- Useful wallet UI elements setup using [@solana/web3.js](https://www.npmjs.com/package/@solana/web3.js)
-- A basic Greeter Solana program written in Anchor
-- UI components for interacting with the Greeter program
+🧠 Game Concept
+Role	Experience
+Seller	List an item, lock NFT / deposit proof, optionally sign legally-binding contract to prevent off-platform sales
+Buyers	Pay a ticket fee (₹100 / $1 / configurable) to participate in raffle
+Platform	Collects fees, triggers randomness, executes payment routing
 
-## Getting Started
+🏆 When threshold is reached → random draw → winner receives item, seller gets paid, others lose tickets like a lottery.
 
-### Installation
+🏗️ High-Level Architecture
 
-#### Download the template
+┌─────────────────────────────────────────────────────────┐
+│                         LuckyBid                        │
+└─────────────────────────────────────────────────────────┬┘
+                                                          │
+             ┌───────────────────────────────┐            │
+             │         Web (Next.js)         │◀───────────┘
+             │  - Connect Wallet             │
+             │  - Create Raffle              │
+             │  - Buy Ticket                 │
+             │  - View Live Winners          │
+             └───────────────────────────────┘
+                          │
+                          ▼
+             ┌───────────────────────────────┐
+             │  Smart Contract (Anchor)      │
+             │ - Create Raffle PDA           │
+             │ - Validate seller lock/proof  │
+             │ - Collect ticket funds        │
+             │ - Switchboard randomness draw │
+             │ - Payout seller & assign item │
+             └───────────────────────────────┘
+                          │
+                          ▼
+            ┌────────────────────────────┐
+            │ Payment Escrow (PDA Vault) │
+            │ - Collect USDC / SOL       │
+            │ - Min ticket logic         │
+            │ - Refund if failed         │
+            └────────────────────────────┘
 
-```shell
-pnpm create solana-dapp@latest -t gh:solana-foundation/templates/web3js/RaffleDrop
-```
+⚙️ Tech Stack
+| Component            | Technology                                     |
+| -------------------- | ---------------------------------------------- |
+| Frontend             | Next.js 14, TailwindCSS, Solana Wallet Adapter |
+| Blockchain           | Solana, Anchor Framework, PDA escrow           |
+| Randomness           | Switchboard VRF                                |
+| Storage              | Arweave/IPFS for item proof & contract         |
+| Optional Legal Layer | Cryptographic smart-legal contract             |
 
-#### Install Dependencies
+🪙 Payment Flow
+User buys ticket
+   │
+   ▼
+Funds transferred to Raffle PDA vault
+   │
+   ├─ If (tickets >= min) → run VRF draw → winner chosen
+   │                        seller paid → item escrow released
+   │
+   └─ Else (deadline passed):
+           refund each buyer → seller NFT/deposit returned
 
-```shell
+🚀 Getting Started
+1️⃣ Installation
 pnpm install
-```
 
-## Apps
+or create this template fresh:
 
-### anchor
+pnpm create solana-dapp@latest \
+ -t gh:solana-foundation/templates/web3js/RaffleDrop
 
-This is a Solana program written in Rust using the Anchor framework.
+ 2️⃣ Anchor Program
+Sync Program ID
 
-#### Commands
-
-You can use any normal anchor commands. Either move to the `anchor` directory and run the `anchor` command or prefix the
-command with `pnpm`, eg: `pnpm anchor`.
-
-#### Sync the program id:
-
-Running this command will create a new keypair in the `anchor/target/deploy` directory and save the address to the
-Anchor config file and update the `declare_id!` macro in the `./src/lib.rs` file of the program.
-
-You will manually need to update the constant in `anchor/lib/counter-exports.ts` to match the new program id.
-
-```shell
+Creates a deploy keypair → writes ID to config → updates declare_id! macro.
 pnpm anchor keys sync
-```
 
-#### Build the program:
-
-```shell
+Build Program
 pnpm anchor-build
-```
 
-#### Start the test validator with the program deployed:
-
-```shell
-pnpm anchor-localnet
-```
-
-#### Run the tests
-
-```shell
+Run Tests
 pnpm anchor-test
-```
 
-#### Deploy to Devnet
-
-```shell
+Deploy to Devnet
 pnpm anchor deploy --provider.cluster devnet
-```
 
-### web
-
-This is a React app that uses the Anchor generated client to interact with the Solana program.
-
-#### Commands
-
-Start the web app
-
-```shell
-pnpm dev
-```
-
-Build the web app
-
-```shell
-pnpm build
-```
