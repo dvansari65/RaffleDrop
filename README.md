@@ -38,9 +38,9 @@ flowchart TD
     C -->|No Deadline Passed| H[Refund Buyers Automatically]
     H --> I[Seller Deposit / NFT Returned]
 ```
-🚀 Getting Started
+# 🚀 Getting Started
 
-Prerequisites
+# Prerequisites
 
 Node.js (v18 or later)
 Solana CLI tools
@@ -53,16 +53,16 @@ pnpm install
 # Or create this template fresh:
 pnpm create solana-dapp@latest -t gh:solana-foundation/templates/web3js/RaffleDrop
 
-2️⃣ Anchor Program Setup
+# Anchor Program Setup
 
 Sync Program ID
 
 Creates a deploy keypair → writes ID to config → updates declare_id! macro.
 pnpm anchor keys sync
 
-Build Program
+# Build Program
 pnpm anchor-build
 
-Deploy to Devnet
+# Deploy to Devnet
 pnpm anchor deploy --provider.cluster devnet
 
