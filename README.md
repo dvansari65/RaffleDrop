@@ -16,60 +16,37 @@ Platform	Collects fees, triggers randomness, executes payment routing
 
 🏆 When threshold is reached → random draw → winner receives item, seller gets paid, others lose tickets like a lottery.
 
-🏗️ High-Level Architecture
+🏗️flowchart TD
 
-┌─────────────────────────────────────────────────────────┐
-│                         LuckyBid                        │
-└─────────────────────────────────────────────────────────┬┘
-                                                          │
-             ┌───────────────────────────────┐            │
-             │         Web (Next.js)         │◀───────────┘
-             │  - Connect Wallet             │
-             │  - Create Raffle              │
-             │  - Buy Ticket                 │
-             │  - View Live Winners          │
-             └───────────────────────────────┘
-                          │
-                          ▼
-             ┌───────────────────────────────┐
-             │  Smart Contract (Anchor)      │
-             │ - Create Raffle PDA           │
-             │ - Validate seller lock/proof  │
-             │ - Collect ticket funds        │
-             │ - Switchboard randomness draw │
-             │ - Payout seller & assign item │
-             └───────────────────────────────┘
-                          │
-                          ▼
-            ┌────────────────────────────┐
-            │ Payment Escrow (PDA Vault) │
-            │ - Collect USDC / SOL       │
-            │ - Min ticket logic         │
-            │ - Refund if failed         │
-            └────────────────────────────┘
+A[User / Buyer / Seller] --> B[Next.js Web App]
 
-⚙️ Tech Stack
-| Component            | Technology                                     |
-| -------------------- | ---------------------------------------------- |
-| Frontend             | Next.js 14, TailwindCSS, Solana Wallet Adapter |
-| Blockchain           | Solana, Anchor Framework, PDA escrow           |
-| Randomness           | Switchboard VRF                                |
-| Storage              | Arweave/IPFS for item proof & contract         |
-| Optional Legal Layer | Cryptographic smart-legal contract             |
+B -->|Wallet Connect / Create Raffle / Buy Ticket| C[Anchor Smart Contract]
+
+C -->|Create Raffle PDA| D[Escrow Vault PDA]
+C -->|Collect Tickets (SOL/USDC)| D
+C -->|Trigger VRF Request| E[Switchboard VRF]
+E -->|Return Random Winner| C
+C -->|Payout Seller + Assign Winner| D
+
+C -->|Store Item Metadata| F[Arweave / IPFS]
 
 🪙 Payment Flow
-User buys ticket
-   │
-   ▼
-Funds transferred to Raffle PDA vault
-   │
-   ├─ If (tickets >= min) → run VRF draw → winner chosen
-   │                        seller paid → item escrow released
-   │
-   └─ Else (deadline passed):
-           refund each buyer → seller NFT/deposit returned
+flowchart TD
+
+A[User Buys Ticket] --> B[Transfer Funds to Raffle PDA Vault]
+
+B --> C{Tickets >= Minimum Threshold?}
+
+C -->|Yes| D[Trigger Switchboard VRF Draw]
+D --> E[Winner Randomly Selected]
+E --> F[Seller Paid from PDA Vault]
+F --> G[Item / Escrow Released to Winner]
+
+C -->|No (Deadline Passed)| H[Refund Buyers Automatically]
+H --> I[Seller Deposit / NFT Returned]
 
 🚀 Getting Started
+
 1️⃣ Installation
 pnpm install
 
