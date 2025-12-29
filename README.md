@@ -14,7 +14,7 @@ LuckyBid is a decentralized raffle-style marketplace where anyone can sell real-
 🔒 Secure Escrow: All funds are held in Program Derived Address (PDA) vaults until conditions are met
 
 🏗️ System Architecture
-
+```mermaid
 flowchart TD
     A[User / Buyer / Seller] --> B[Next.js Web App]
     B -->|Wallet Connect / Create Raffle / Buy Ticket| C[Anchor Smart Contract]
@@ -24,9 +24,10 @@ flowchart TD
     E -->|Return Random Winner| C
     C -->|Payout Seller + Assign Winner| D
     C -->|Store Item Metadata| F[Arweave / IPFS]
-
+```
 🪙 Payment Flow
 
+```mermaid
 flowchart TD
     A[User Buys Ticket] --> B[Transfer Funds to Raffle PDA Vault]
     B --> C{Tickets >= Minimum Threshold?}
@@ -36,7 +37,7 @@ flowchart TD
     F --> G[Item / Escrow Released to Winner]
     C -->|No Deadline Passed| H[Refund Buyers Automatically]
     H --> I[Seller Deposit / NFT Returned]
-
+```
 🚀 Getting Started
 
 Prerequisites
