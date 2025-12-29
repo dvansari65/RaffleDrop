@@ -38,31 +38,25 @@ flowchart TD
     C -->|No Deadline Passed| H[Refund Buyers Automatically]
     H --> I[Seller Deposit / NFT Returned]
 ```
-# 🚀 Getting Started
+🚀 Quick Start
 
-# Prerequisites
+Step 1: Install dependencies
 
-Node.js (v18 or later)
-Solana CLI tools
-Rust and Anchor CLI
-Phantom or other Solana wallet
-
-# Install dependencies
+bash
 pnpm install
+Step 2: Sync program ID
 
-# Or create this template fresh:
-pnpm create solana-dapp@latest -t gh:solana-foundation/templates/web3js/RaffleDrop
-
-# Anchor Program Setup
-
-Sync Program ID
-
-Creates a deploy keypair → writes ID to config → updates declare_id! macro.
+bash
 pnpm anchor keys sync
+Step 3: Build the program
 
-# Build Program
+bash
 pnpm anchor-build
+Step 4: Deploy to devnet
 
-# Deploy to Devnet
+bash
 pnpm anchor deploy --provider.cluster devnet
+Step 5: Start the frontend
 
+bash
+pnpm dev
