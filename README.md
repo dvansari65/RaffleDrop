@@ -16,6 +16,7 @@ Platform	Collects fees, triggers randomness, executes payment routing
 
 🏆 When threshold is reached → random draw → winner receives item, seller gets paid, others lose tickets like a lottery.
 
+```mermaid
 🏗️flowchart TD
 
 A[User / Buyer / Seller] --> B[Next.js Web App]
@@ -29,8 +30,10 @@ E -->|Return Random Winner| C
 C -->|Payout Seller + Assign Winner| D
 
 C -->|Store Item Metadata| F[Arweave / IPFS]
+```
 
 🪙 Payment Flow
+```mermaid
 flowchart TD
 
 A[User Buys Ticket] --> B[Transfer Funds to Raffle PDA Vault]
@@ -44,7 +47,7 @@ F --> G[Item / Escrow Released to Winner]
 
 C -->|No (Deadline Passed)| H[Refund Buyers Automatically]
 H --> I[Seller Deposit / NFT Returned]
-
+```
 🚀 Getting Started
 
 1️⃣ Installation
