@@ -1,5 +1,5 @@
-   0.274793625s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint: fingerprint error for basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic)/Check { test: false }/TargetInner { ..: lib_target("basic", ["cdylib", "lib"], "/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic/src/lib.rs", Edition2021) }
-   0.275407125s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/basic-81b8bcc69b565d32/lib-basic`
+   0.124397542s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint: fingerprint error for basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic)/Check { test: false }/TargetInner { ..: lib_target("basic", ["cdylib", "lib"], "/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic/src/lib.rs", Edition2021) }
+   0.124425250s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/basic-20989b45ae31252c/lib-basic`
 
 Caused by:
     No such file or directory (os error 2)
@@ -22,8 +22,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.329689292s  INFO prepare_target{force=false package_id=anchor-spl v0.32.1 target="anchor_spl"}: cargo::core::compiler::fingerprint: fingerprint error for anchor-spl v0.32.1/Check { test: false }/TargetInner { ..: lib_target("anchor_spl", ["lib"], "/Users/danishvahajuddinansari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anchor-spl-0.32.1/src/lib.rs", Edition2021) }
-   0.329704875s  INFO prepare_target{force=false package_id=anchor-spl v0.32.1 target="anchor_spl"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/anchor-spl-c139736a33a8c6b4/lib-anchor_spl`
+   0.127903083s  INFO prepare_target{force=false package_id=anchor-lang v0.32.1 target="anchor_lang"}: cargo::core::compiler::fingerprint: fingerprint error for anchor-lang v0.32.1/Check { test: false }/TargetInner { ..: lib_target("anchor_lang", ["lib"], "/Users/danishvahajuddinansari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anchor-lang-0.32.1/src/lib.rs", Edition2021) }
+   0.127915167s  INFO prepare_target{force=false package_id=anchor-lang v0.32.1 target="anchor_lang"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/anchor-lang-32490a4a165d7de4/lib-anchor_lang`
 
 Caused by:
     No such file or directory (os error 2)
@@ -47,8 +47,8 @@ Stack backtrace:
   15: std::rt::lang_start::<()>::{closure#0}
   16: std::rt::lang_start_internal
   17: _main
-   0.330291708s  INFO prepare_target{force=false package_id=anchor-lang v0.32.1 target="anchor_lang"}: cargo::core::compiler::fingerprint: fingerprint error for anchor-lang v0.32.1/Check { test: false }/TargetInner { ..: lib_target("anchor_lang", ["lib"], "/Users/danishvahajuddinansari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anchor-lang-0.32.1/src/lib.rs", Edition2021) }
-   0.330296000s  INFO prepare_target{force=false package_id=anchor-lang v0.32.1 target="anchor_lang"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/anchor-lang-32490a4a165d7de4/lib-anchor_lang`
+   0.142170500s  INFO prepare_target{force=false package_id=anchor-spl v0.32.1 target="anchor_spl"}: cargo::core::compiler::fingerprint: fingerprint error for anchor-spl v0.32.1/Check { test: false }/TargetInner { ..: lib_target("anchor_spl", ["lib"], "/Users/danishvahajuddinansari/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/anchor-spl-0.32.1/src/lib.rs", Edition2021) }
+   0.142181208s  INFO prepare_target{force=false package_id=anchor-spl v0.32.1 target="anchor_spl"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/anchor-spl-c139736a33a8c6b4/lib-anchor_spl`
 
 Caused by:
     No such file or directory (os error 2)
@@ -61,20 +61,19 @@ Stack backtrace:
    4: cargo::core::compiler::fingerprint::prepare_target
    5: cargo::core::compiler::compile
    6: cargo::core::compiler::compile
-   7: cargo::core::compiler::compile
-   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
-   9: cargo::ops::cargo_compile::compile_ws
-  10: cargo::ops::cargo_compile::compile_with_exec
-  11: cargo::ops::cargo_compile::compile
-  12: cargo::commands::check::exec
-  13: <cargo::cli::Exec>::exec
-  14: cargo::main
-  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
-  16: std::rt::lang_start::<()>::{closure#0}
-  17: std::rt::lang_start_internal
-  18: _main
-   0.341479542s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint: fingerprint error for basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic)/Check { test: true }/TargetInner { ..: lib_target("basic", ["cdylib", "lib"], "/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic/src/lib.rs", Edition2021) }
-   0.341488167s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/basic-295643a8d858ee61/test-lib-basic`
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.155448417s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint: fingerprint error for basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic)/Check { test: true }/TargetInner { ..: lib_target("basic", ["cdylib", "lib"], "/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic/src/lib.rs", Edition2021) }
+   0.155462292s  INFO prepare_target{force=false package_id=basic v0.1.0 (/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/programs/basic) target="basic"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/danishvahajuddinansari/WEB3/RaffleDrop/anchor/target/debug/.fingerprint/basic-7f3d20363bc0d253/test-lib-basic`
 
 Caused by:
     No such file or directory (os error 2)

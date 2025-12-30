@@ -26,14 +26,20 @@ pub mod basic {
     ) -> Result<()> {
         let raffle = &mut ctx.accounts.raffle_account;
         let clock = Clock::get()?;
-        
+
         // Input validation
         require!(selling_price > 0, ErrorCode::InvalidPrice);
         require!(ticket_price > 0, ErrorCode::InvalidPrice);
         require!(min_tickets > 0, ErrorCode::InvalidTicketCount);
-        require!(max_tickets >= min_tickets, ErrorCode::InvalidTicketCount);
-        require!(deadline > clock.unix_timestamp, ErrorCode::InvalidDeadline);
-        
+        require!(
+            max_tickets >= min_tickets,
+            ErrorCode::InvalidTicketCount
+        );
+        require!(
+            deadline > clock.unix_timestamp,
+            ErrorCode::InvalidDeadline
+        );
+
         // Initialize raffle account
         raffle.seller = ctx.accounts.seller.key();
         raffle.payment_mint = ctx.accounts.payment_mint.key();
@@ -52,14 +58,14 @@ pub mod basic {
         raffle.claimed = false;
         raffle.bump = ctx.bumps.raffle_account;
         raffle.escrow_bump = ctx.bumps.escrow_payment_account;
-        
+
         emit!(RaffleCreated {
             raffle: raffle.key(),
             seller: raffle.seller,
             ticket_price,
             deadline,
         });
-        
+
         Ok(())
     }
 }
@@ -78,47 +84,47 @@ pub mod basic {
 pub struct CreateRaffle<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
-    
-    /// USDC (or other token) mint for ticket payments
+
+    /// Payment token mint (USDC, SOL wrapped, etc.)
     pub payment_mint: Account<'info, Mint>,
-    
-    /// Seller's USDC token account (for potential refunds/fees)
+
+    /// Seller's token account
     #[account(
         mut,
-        token::mint = payment_mint,
-        token::authority = seller,
+        constraint = seller_token_account.mint == payment_mint.key(),
+        constraint = seller_token_account.owner == seller.key(),
     )]
     pub seller_token_account: Account<'info, TokenAccount>,
-    
-    /// RAFFLE PDA account
+
+    /// Raffle PDA
     #[account(
         init,
         payer = seller,
         space = RaffleAccount::SIZE,
         seeds = [
-            b"raffle", 
-            seller.key().as_ref(), 
+            b"raffle",
+            seller.key().as_ref(),
             &selling_price.to_le_bytes(),
             &deadline.to_le_bytes()
         ],
         bump
     )]
     pub raffle_account: Account<'info, RaffleAccount>,
-    
-    /// ESCROW for TICKET PAYMENTS (USDC)
+
+    /// Escrow token account - THE FIX IS HERE
+    /// Must be initialized AFTER raffle_account exists
     #[account(
         init,
         payer = seller,
-        seeds = [
-            b"escrow_payment", 
-            raffle_account.key().as_ref()
-        ],
+        seeds = [b"escrow_payment", raffle_account.key().as_ref()],
         bump,
         token::mint = payment_mint,
         token::authority = raffle_account,
     )]
     pub escrow_payment_account: Account<'info, TokenAccount>,
-    
+
+    /// Programs
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
 }
