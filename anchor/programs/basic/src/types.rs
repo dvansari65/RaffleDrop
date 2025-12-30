@@ -1,26 +1,51 @@
-use anchor_lang::prelude::Pubkey;
+use anchor_lang::prelude::*;
 
-
+#[account]
 pub struct RaffleAccount {
-    pub seller: Pubkey,                    // Seller's wallet address
-    pub item_mint: Pubkey,                 // NFT/Token mint address (if digital)
-    pub item_name: String,                 // "iPhone 15 Pro"
-    pub item_description: String,          // Details about the item
-    pub item_image_uri: String,            // IPFS or Arweave link
-    pub selling_price: u64,                // 10,000 USDC (in lamports)
-    pub ticket_price: u64,                 // 100 USDC per ticket
-    pub min_tickets: u32,                  // Minimum 100 tickets required
-    pub max_tickets: u32,                  // Maximum 200 tickets allowed
-    pub deadline: i64,                     // Unix timestamp
-    pub participants: Vec<Pubkey>,         // List of buyers
-    pub total_collected: u64,              // Total funds collected
-    pub status: RaffleStatus,              // Active/Completed/Cancelled
-    pub winner: Option<Pubkey>,            // Winner address (null initially)
-    pub bump: u8,                          // PDA bump seed
+    pub seller: Pubkey,
+    pub payment_mint: Pubkey,
+    pub item_name: String,
+    pub item_description: String,
+    pub item_image_uri: String,
+    pub selling_price: u64,
+    pub ticket_price: u64,
+    pub min_tickets: u32,
+    pub max_tickets: u32,
+    pub deadline: i64,
+    pub participants: Vec<Pubkey>,
+    pub total_collected: u64,
+    pub status: RaffleStatus,
+    pub winner: Option<Pubkey>,
+    pub claimed: bool,
+    pub bump: u8,
+    pub escrow_bump: u8,
 }
 
+impl RaffleAccount {
+    pub const SIZE: usize = 8 + // discriminator
+        32 + // seller
+        32 + // payment_mint
+        4 + 50 + // item_name (max 50 chars)
+        4 + 200 + // item_description (max 200 chars)
+        4 + 100 + // item_image_uri (max 100 chars)
+        8 + // selling_price
+        8 + // ticket_price
+        4 + // min_tickets
+        4 + // max_tickets
+        8 + // deadline
+        4 + (32 * 200) + // participants (max 200)
+        8 + // total_collected
+        1 + // status
+        1 + 32 + // winner (option)
+        1 + // claimed
+        1 + // bump
+        1; // escrow_bump
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
 pub enum RaffleStatus {
     Active,
+    Drawing,
     Completed,
     Cancelled,
     Refunded,
