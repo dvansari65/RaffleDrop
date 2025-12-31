@@ -3,10 +3,11 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Search } from 'lucide-react'
 import { ThemeSelect } from '@/components/theme-select'
 import { ClusterUiSelect } from './cluster/cluster-ui'
 import { WalletButton } from '@/components/solana/solana-provider'
+import { Input } from '@/components/ui/input'
 
 export function AppHeader({ links = [] }: { links: { label: string; path: string }[] }) {
   const pathname = usePathname()
@@ -17,63 +18,120 @@ export function AppHeader({ links = [] }: { links: { label: string; path: string
   }
 
   return (
-    <header className="relative z-50 px-4 py-2 bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-400">
-      <div className="mx-auto flex justify-between items-center">
-        <div className="flex items-baseline gap-4">
-          <Link className="text-xl hover:text-neutral-500 dark:hover:text-white" href="/">
-            <span>RaffleDrop</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <Link 
+            className="flex items-center space-x-2 group" 
+            href="/"
+          >
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              RAFFL
+            </span>
           </Link>
-          <div className="hidden md:flex items-center">
-            <ul className="flex gap-4 flex-nowrap items-center">
-              {links.map(({ label, path }) => (
-                <li key={path}>
-                  <Link
-                    className={`hover:text-neutral-500 dark:hover:text-white ${isActive(path) ? 'text-neutral-500 dark:text-white' : ''}`}
-                    href={path}
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {links.map(({ label, path }) => (
+              <Link
+                key={path}
+                href={path}
+                className={`text-sm font-medium transition-colors hover:text-primary relative group ${
+                  isActive(path)
+                    ? 'text-foreground'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {label}
+                {isActive(path) && (
+                  <span className="absolute -bottom-6 left-0 right-0 h-0.5 bg-primary" />
+                )}
+                <span className="absolute -bottom-6 left-0 right-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform" />
+              </Link>
+            ))}
+          </nav>
+
+          {/* Right Side Actions */}
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search raffles and prizes..."
+                className="w-64 pl-10 bg-muted/50 border-border/50 focus:border-primary transition-colors"
+              />
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                ⌘K
+              </kbd>
+            </div>
+
+            {/* Wallet Connect Button */}
+            <WalletButton />
+
+            {/* Theme & Cluster Selects */}
+            <div className="flex items-center space-x-2">
+              <ClusterUiSelect />
+              <ThemeSelect />
+            </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setShowMenu(!showMenu)}
+          >
+            {showMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
+      </div>
 
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowMenu(!showMenu)}>
-          {showMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+      {/* Mobile Menu */}
+      {showMenu && (
+        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur">
+          <div className="container mx-auto px-6 py-4 space-y-4">
+            {/* Mobile Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search raffles..."
+                className="w-full pl-10 bg-muted/50"
+              />
+            </div>
 
-        <div className="hidden md:flex items-center gap-4">
-          <WalletButton />
-          <ClusterUiSelect />
-          <ThemeSelect />
-        </div>
+            {/* Mobile Navigation Links */}
+            <nav className="flex flex-col space-y-2">
+              {links.map(({ label, path }) => (
+                <Link
+                  key={path}
+                  href={path}
+                  onClick={() => setShowMenu(false)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive(path)
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
 
-        {showMenu && (
-          <div className="md:hidden fixed inset-x-0 top-[52px] bottom-0 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-sm">
-            <div className="flex flex-col p-4 gap-4 border-t dark:border-neutral-800">
-              <ul className="flex flex-col gap-4">
-                {links.map(({ label, path }) => (
-                  <li key={path}>
-                    <Link
-                      className={`hover:text-neutral-500 dark:hover:text-white block text-lg py-2  ${isActive(path) ? 'text-neutral-500 dark:text-white' : ''} `}
-                      href={path}
-                      onClick={() => setShowMenu(false)}
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex flex-col gap-4">
-                <WalletButton />
+            {/* Mobile Actions */}
+            <div className="flex flex-col space-y-3 pt-4 border-t border-border/40">
+              <WalletButton />
+              <div className="flex items-center space-x-2">
                 <ClusterUiSelect />
                 <ThemeSelect />
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   )
 }
