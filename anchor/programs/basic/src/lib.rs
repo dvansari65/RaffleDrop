@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer, spl_token::state::ACCOUNT_INITIALIZED_INDEX};
 use solana_program::pubkey::Pubkey;
 
 use crate::types::RaffleAccount;
@@ -11,6 +11,8 @@ mod events;
 
 #[program]
 pub mod basic {
+    use crate::{events::TicketsBought, types::RaffleStatus};
+
     use super::*;
 
     pub fn create_raffle(
@@ -68,6 +70,50 @@ pub mod basic {
 
         Ok(())
     }
+    pub fn buy_tickets (
+        ctx: Context<BuyTickets>,
+        num_tickets:u8
+    )->Result<()>{
+        let raffle_account = &mut ctx.accounts.raffle_account;
+        let clock = Clock::get()?.unix_timestamp;
+        let escrow_account = &mut ctx.accounts.escrow_payment_account;
+        let buyer = &mut ctx.accounts.buyer;
+        require!(raffle_account.status == RaffleStatus::Active,ErrorCode::RaffleNotActive);
+        require!(num_tickets > 0,ErrorCode::InvalidTicketCount);
+        require!(raffle_account.deadline > clock,ErrorCode::DeadlinePassed);
+        require!(
+            raffle_account.participants.len() + num_tickets as usize <= raffle_account.max_tickets as usize,
+            ErrorCode::MaxTicketsReached
+        );
+        let total_price= num_tickets
+                            .checked_mul(raffle_account.selling_price as u8)
+                            .ok_or(ErrorCode::Overflow)?;
+        let cpi_accounts = Transfer {
+            from:ctx.accounts.buyer_token_accont.to_account_info(),
+            to:escrow_account.to_account_info(),
+            authority:buyer.to_account_info()
+        };
+        let cpi_program =  ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_ctx, total_price as u65)?;
+        
+        raffle_account.total_collected = raffle_account 
+                                            .total_collected
+                                            .checked_add(total_price as u64)
+                                            .ok_or(ErrorCode::OverFlow)?;
+        let participants = raffle_account.participants;
+        for _ in 0..num_tickets  {  
+            participants.push(buyer.key());
+        };
+
+        emit!(TicketsBought{
+            buyer:buyer.key(),
+            raffle:raffle_account.key(),
+            number_of_tickets_bought:num_tickets
+        });
+        Ok(())
+    }
+    
 }
 
 #[derive(Accounts)]
@@ -100,7 +146,7 @@ pub struct CreateRaffle<'info> {
     #[account(
         init,
         payer = seller,
-        space = RaffleAccount::SIZE,
+        space = ACCOUNT_INITIALIZED_INDEX,
         seeds = [
             b"raffle",
             seller.key().as_ref(),
@@ -127,4 +173,28 @@ pub struct CreateRaffle<'info> {
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct  BuyTickets<'info> {
+    #[account(mut)]
+    pub buyer : Signer<'info>,
+
+    #[account(mut)]
+    pub buyer_token_accont : Account<'info,TokenAccount>,
+
+    #[account(
+        seeds = [b"raffle",raffle.seller.key().as_ref(),&raffle.selling_price.to_le_bytes(),&raffle.deadline.to_le_bytes()],
+        bump = raffle.bump
+    )]
+    pub raffle_account : Account<'info,RaffleAccount>,
+
+    #[account(
+        seeds = [b"escrow_payment",raffle_account.key().as_ref()],
+        bump
+    )]
+    pub escrow_payment_account : Account<'info,TokenAccount>,
+
+    pub token_program : Program<'info,Token>,
+    pub system_program : Program<'info,System>
 }
