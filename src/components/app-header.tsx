@@ -18,7 +18,7 @@ export function AppHeader({ links = [] }: { links: { label: string; path: string
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -91,7 +91,7 @@ export function AppHeader({ links = [] }: { links: { label: string; path: string
 
       {/* Mobile Menu */}
       {showMenu && (
-        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur">
+        <div className="md:hidden">
           <div className="container mx-auto px-6 py-4 space-y-4">
             {/* Mobile Search */}
             <div className="relative">
