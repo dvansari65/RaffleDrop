@@ -28,9 +28,7 @@ function ExploreHeading({ title1, title2 }: ExploreHeadingProps) {
       className="text-5xl font-extrabold tracking-tight mb-6"
     >
       <span className="text-white">{neonText(title1)}</span>
-      <span
-        className="ml-3 bg-clip-text text-transparent gradient-neon animate-neon-pulse"
-      >
+      <span className="ml-3 text-white animate-neon-pulse">
         {neonText(title2)}
       </span>
     </motion.h1>
