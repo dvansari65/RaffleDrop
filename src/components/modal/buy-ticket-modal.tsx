@@ -112,7 +112,7 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
                             <div className="bg-red-950/30 border border-red-800/30 rounded-lg p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
-                                    <p className="text-sm text-red-400 font-mono">{error}</p>
+                                    <p className="text-sm text-red-400 font-mono">{buyTicketError}</p>
                                 </div>
                             </div>
                         )}
