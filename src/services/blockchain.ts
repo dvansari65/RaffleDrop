@@ -1,52 +1,40 @@
-import { useQuery } from "@tanstack/react-query"
 import { PublicKey } from '@solana/web3.js'
-import { useWallet } from "@solana/wallet-adapter-react"
-import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system"
-import { useRaffleProgram } from "@/hooks/useRaffleProgram"
+import { BN, Program } from "@coral-xyz/anchor"
 
-//  seeds = [
-//     b"raffle",
-//     seller.key().as_ref(),
-//     &selling_price.to_le_bytes(),
-//     &deadline.to_le_bytes()
-// ],
-interface GetRafflePdaProps  {
-    sellerKey:PublicKey,
-    sellingPrice:number,
-    deadline:number
+interface GetRafflePdaProps {
+  sellerKey: PublicKey,
+  sellingPrice: number,
+  deadline: number,
+  programId: PublicKey
 }
-export const getRafflePda = ({
-    sellerKey,
-    sellingPrice,
-    deadline
-}:GetRafflePdaProps)=>{
-    const {publicKey} = useWallet()
-    const {program} = useRaffleProgram()
-    return useQuery({
-        queryKey:["RafflePda",sellerKey],
-        queryFn:()=>{
-            try {
-                if(!publicKey){
-                    throw new Error("Connect your wallet first!")
-                }
-                const sellingPriceBuffer = Buffer.alloc(8)
-                sellingPriceBuffer.writeBigUint64LE(BigInt(sellingPrice))
 
-                const deadlineBuffer = Buffer.alloc(8)
-                deadlineBuffer.writeBigInt64LE(BigInt(deadline))
-                const pda = PublicKey.findProgramAddressSync(
-                    [
-                        Buffer.from("raffle"),
-                        publicKey?.toBuffer(),
-                       sellingPriceBuffer,
-                       deadlineBuffer
-                    ],
-                    program.programId
-                )
-                return pda;
-            } catch (error) {
-                throw error;
-            }
-        }
-    })
+export const getRafflePda = ({
+  sellerKey,
+  sellingPrice,
+  deadline,
+  programId
+}: GetRafflePdaProps) => {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("raffle"),
+      sellerKey.toBuffer(),
+      new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
+      new BN(deadline).toArrayLike(Buffer, "le", 8)
+    ],
+    programId
+  )
+  
+  return pda;
+}
+
+export const getEscrowPda = (raffleKey: PublicKey, programId: PublicKey) => {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("escrow_payment"),
+      raffleKey.toBuffer()
+    ],
+    programId
+  )
+  
+  return pda;
 }
