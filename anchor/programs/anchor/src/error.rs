@@ -38,4 +38,10 @@ pub enum RaffleError {
     DeadlineNotReached,
     #[msg("Min tickets reached")]
     MinTicketsReached,
+    #[msg("Unauthorise request!")]
+    Unauthorized,
+    #[msg("Invalid randomness account data!")]
+    InvalidRandomnessAccount,
+    #[msg("Random data too old!")]
+    RandomnessTooOld
 }

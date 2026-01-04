@@ -11,3 +11,4 @@ export function ellipsify(str = '', len = 4, delimiter = '..') {
 
   return strLen >= limit ? str.substring(0, len) + delimiter + str.substring(strLen - len, strLen) : str
 }
+

@@ -3,6 +3,7 @@ import './globals.css'
 import { AppProviders } from '@/components/app-providers'
 import { AppLayout } from '@/components/app-layout'
 import React from 'react'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'RaffleDrop',
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
 const links: { label: string; path: string }[] = [
   // More links...
   { label: 'Home', path: '/' },
-  { label: 'Explore', path: '/Explore' }
+  { label: 'Explore', path: '/Explore' },
+  { label: 'Create', path: '/Create' }
 ]
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -21,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`antialiased`}>
         <AppProviders>
           <AppLayout links={links}>{children}</AppLayout>
+          <Toaster/>
         </AppProviders>
       </body>
     </html>

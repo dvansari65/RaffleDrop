@@ -1,8 +1,6 @@
 import React from "react";
 import { Ticket, Clock, Users, Zap, Trophy, Sparkles } from "lucide-react";
-import { Button } from "../ui/button";
-import { buyTicketProps } from "@/types/raffle";
-import { toast } from "sonner";
+import {PublicKey} from "@solana/web3.js"
 
 
 interface RaffleCardProps {
@@ -13,9 +11,25 @@ interface RaffleCardProps {
     ticketPrice: number;
     totalCollected: number;
     maxTickets: number;
-    deadline: Date;
+    deadline: number;
     status: "active" | "drawing" | "completed" | "cancelled" | "refunded";
-    handleOpenModal:()=>void
+    sellerKey:string,
+    raffleKey:string,
+    onBuyTicket:(
+        {
+            maxTickets,
+            sellingPrice,
+            deadline,
+            sellerKey,
+            raffleKey
+        }:{
+            maxTickets:number,
+            sellingPrice:number,
+            deadline:number,
+            sellerKey:string ,
+            raffleKey:string
+        }
+    )=>void
 }
 
 const RaffleCard: React.FC<RaffleCardProps> = ({
@@ -28,11 +42,13 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
     maxTickets,
     deadline,
     status,
-    handleOpenModal
+    onBuyTicket,
+    raffleKey,
+    sellerKey
 }) => {
     // Compute time left
    
-    const timeLeftMs = deadline.getTime() - Date.now();
+    const timeLeftMs = new Date(Number(deadline)).getTime() - Date.now();
     const daysLeft = Math.max(0, Math.floor(timeLeftMs / (1000 * 60 * 60 * 24)));
     const hoursLeft = Math.max(0, Math.floor((timeLeftMs / (1000 * 60 * 60)) % 24));
 
@@ -46,6 +62,10 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
         refunded: { text: "Refunded", color: "text-slate-400" },
     };
     const currentStatus = statusMap[status];
+
+    const handleOpenModal = ()=>{
+        onBuyTicket({maxTickets,sellingPrice,deadline,sellerKey,raffleKey})
+    }
    
     return (
         <div className="group relative">
@@ -134,7 +154,7 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
                     </div>
 
                     {/* Buy Ticket Button */}
-                    <button className="w-full relative group/btn overflow-hidden rounded-lg bg-gradient-to-r from-red-900/20 via-red-800/20 to-amber-900/20 p-px border border-red-800/50 hover:border-red-600/50 transition-all duration-300">
+                    <button onClick={handleOpenModal} className="w-full relative group/btn overflow-hidden rounded-lg bg-gradient-to-r from-red-900/20 via-red-800/20 to-amber-900/20 p-px border border-red-800/50 hover:border-red-600/50 transition-all duration-300">
                         {/* Button Glow Effect */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-500 opacity-0 group-hover/btn:opacity-20 blur transition duration-500"></div>
 
@@ -142,7 +162,7 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
                         <div className="relative bg-slate-900 rounded-lg py-3 px-6">
                             <div className="flex items-center justify-center gap-3">
                                 <Ticket className="w-5 h-5 text-amber-400 animate-pulse" />
-                                <span onClick={handleOpenModal} className="text-lg font-bold bg-gradient-to-r from-red-400 via-red-300 to-amber-400 bg-clip-text text-transparent group-hover/btn:from-red-300 group-hover/btn:via-red-200 group-hover/btn:to-amber-300 transition-all duration-300">
+                                <span className="text-lg font-bold bg-gradient-to-r from-red-400 via-red-300 to-amber-400 bg-clip-text text-transparent group-hover/btn:from-red-300 group-hover/btn:via-red-200 group-hover/btn:to-amber-300 transition-all duration-300">
                                     BUY TICKET
                                 </span>
                                 <Ticket className="w-5 h-5 text-amber-400 animate-pulse" />

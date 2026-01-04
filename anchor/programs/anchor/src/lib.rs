@@ -1,7 +1,7 @@
+use switchboard_on_demand::on_demand::accounts::pull_feed::PullFeedAccountData;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Mint, Token, TokenAccount,Transfer};
-
-use crate::types::RaffleAccount;
+use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, Token, TokenAccount,Transfer}};
+use crate::{error::RaffleError, types::{RaffleAccount, RaffleStatus}};
 
 declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
 
@@ -13,7 +13,6 @@ mod events;
 pub mod Raffle {
 
     use crate::{ error::RaffleError, events::{RaffleCreated, TicketsBought}, types::RaffleStatus};
-
     use super::*;
 
     pub fn create_raffle(
@@ -38,6 +37,7 @@ pub mod Raffle {
             max_tickets >= min_tickets,
             RaffleError::InvalidTicketCount
         );
+
         require!(
             deadline > clock.unix_timestamp,
             RaffleError::InvalidDeadline
@@ -86,7 +86,7 @@ pub mod Raffle {
             raffle_account.participants.len() + num_tickets as usize <= raffle_account.max_tickets as usize,
             RaffleError::MaxTicketsReached
         );
-        let total_price= num_tickets
+        let total_price = num_tickets
                             .checked_mul(raffle_account.selling_price as u8)
                             .ok_or(RaffleError::Overflow)?;
         let cpi_accounts = Transfer {
@@ -112,6 +112,46 @@ pub mod Raffle {
             raffle:raffle_account.key(),
             number_of_tickets_bought:num_tickets
         });
+        Ok(())
+    }
+    pub fn draw_winner (ctx: Context<DrawWinner>)->Result<()>{
+        let raffle_account = &mut ctx.accounts.raffle_account;
+        let clock = Clock::get()?.unix_timestamp;
+
+        require!(
+            clock > raffle_account.deadline,
+            RaffleError::DeadlineNotReached
+        );
+        require!(
+            !raffle_account.claimed,
+            RaffleError::AlreadyClaimed
+        );
+        let randomness_data = PullFeedAccountData::parse(
+            ctx.accounts.randomness_account_data.try_borrow_data()?
+        )
+        .map_err(|_|RaffleError::InvalidRandomnessAccount)?;
+
+       
+        let staleness_time = clock - randomness_data.last_update_timestamp;
+        require!(
+            staleness_time < 60,
+            RaffleError::RandomnessTooOld
+        );
+        let value = randomness_data.result.value;
+        let random_bytes = value.to_le_bytes();
+        let mut bytes_array = [0u8; 8];
+        bytes_array.copy_from_slice(&random_bytes[0..8]);
+        let random_number = u64::from_ne_bytes(bytes_array);
+
+        let num_participants = raffle_account.participants.len();
+        let winner_index = (random_number as usize) % num_participants;
+        let winner = raffle_account.participants[winner_index];
+        raffle_account.winner = Some(winner);
+        raffle_account.claimed = true;
+        raffle_account.product_delivered = false;
+        // we are not moving assets till the product not delivered to the winner!
+        raffle_account.randomness_account = Some(ctx.accounts.randomness_account_data.key());
+        msg!("Winner selected successfully:{}",winner);
         Ok(())
     }
     
@@ -172,6 +212,7 @@ pub struct CreateRaffle<'info> {
 
     /// Programs
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
@@ -201,3 +242,42 @@ pub struct  BuyTickets<'info> {
     pub token_program : Program<'info,Token>,
     pub system_program : Program<'info,System>
 }
+
+#[derive(Accounts)]
+pub struct DrawWinner<'info>{
+    /// CHECK:  switchboard randomness account
+    pub randomness_account_data:AccountInfo<'info>,
+
+    #[account(
+        mut,
+        seeds=[b"raffle_account",
+        raffle_account.seller.key().as_ref(),
+        &raffle_account.selling_price.to_le_bytes(),
+        &raffle_account.deadline.to_le_bytes()
+        ],
+        bump = raffle_account.bump,
+        constraint = raffle_account.seller.key() == selller.key() @ RaffleError::Unauthorized,
+        constraint = raffle_account.status == RaffleStatus::Active @ RaffleError::RaffleNotActive,
+        constraint = raffle_account.participants.len() > 0 @ RaffleError::NoParticipants,
+    )]
+    pub raffle_account:Account<'info,RaffleAccount>,
+
+    #[account(mut)]
+    pub winner_token_account:Account<'info,token::TokenAccount>,
+    #[account(
+        mut,
+        seeds = [
+            b"escrow_payment",
+            raffle_account.key().as_ref()
+        ],
+        bump = raffle_account.bump
+    )]
+    pub escrow_payment_account : Account<'info,TokenAccount>,
+
+    #[account(mut)]
+    pub selller  : Signer<'info>,
+
+    pub token_program : Program<'info,Token>,
+    pub system_program : Program<'info,System>
+}
+

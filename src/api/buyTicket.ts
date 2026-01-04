@@ -1,5 +1,6 @@
 import { useCreateAssociatedToken } from "@/hooks/useCreateATA"
 import { useRaffleProgram } from "@/hooks/useRaffleProgram"
+import { buyTicketProps } from "@/types/raffle"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { PublicKey, SystemProgram } from "@solana/web3.js"
@@ -7,38 +8,46 @@ import { useMutation } from "@tanstack/react-query"
 import { BN } from "bn.js"
 
 
-interface buyTicketProps {
-    numTickets:number,
-    sellingPrice:number,
-    deadline:number
-}
-export const buyTicket = ()=>{
-    const {program} = useRaffleProgram()
-    const {publicKey} = useWallet()
-    const {createTokenAccount} = useCreateAssociatedToken()
-    return useMutation<any,Error,buyTicketProps>({
-        mutationKey:["buy-ticket"],
-        mutationFn:async({numTickets,sellingPrice,deadline}:buyTicketProps)=>{
+
+export const buyTicket = () => {
+    const { program } = useRaffleProgram()
+    const { publicKey } = useWallet()
+    const { createTokenAccount } = useCreateAssociatedToken()
+    return useMutation<any, Error, buyTicketProps>({
+        mutationKey: ["buy-ticket"],
+        mutationFn: async ({ numTickets, sellingPrice, deadline, sellerPubKey, rafflePubKey }: buyTicketProps) => {
             try {
                 const tokenATA = await createTokenAccount()
-                if(!tokenATA){
+                if (!tokenATA) {
                     throw new Error("Buyer token account not found!")
                 }
-                if(!publicKey){
+                if (!publicKey) {
                     throw new Error("Connect your wallet!")
                 }
-                if(!program?.programId){
+                if (!program?.programId) {
                     throw new Error("Program id not found!")
                 }
+                // ADD DETAILED LOGGING
+                console.log("=== PDA Derivation Debug ===")
+                console.log("Seller PubKey:", sellerPubKey.toBase58())
+                console.log("Selling Price:", sellingPrice)
+                console.log("Deadline:", deadline)
+                console.log("Program ID:", program.programId.toBase58())
+
+                // Log the actual buffer values
+                const sellingPriceBuffer = new BN(sellingPrice).toArrayLike(Buffer, "le", 8)
+                const deadlineBuffer = new BN(deadline).toArrayLike(Buffer, "le", 8)
+                console.log("Selling Price Buffer:", sellingPriceBuffer.toString('hex'))
+                console.log("Deadline Buffer:", deadlineBuffer.toString('hex'))
                 const [rafflePda] = PublicKey.findProgramAddressSync(
                     [
-                      Buffer.from("raffle"),
-                      publicKey.toBuffer(),
-                      new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
-                      new BN(deadline).toArrayLike(Buffer, "le", 8)
+                        Buffer.from("raffle"),
+                        sellerPubKey.toBuffer(),
+                        new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
+                        new BN(deadline).toArrayLike(Buffer, "le", 8)
                     ],
                     program?.programId
-                  )
+                )
                 const [escrowPaymentAccount] = PublicKey.findProgramAddressSync(
                     [
                         Buffer.from("escrow_payment"),
@@ -46,21 +55,31 @@ export const buyTicket = ()=>{
                     ],
                     program.programId
                 )
+                console.log("raffle pda:", rafflePda)
+                if (!rafflePda) {
+                    throw new Error("Raffle Pda not found!")
+                }
+                if (!rafflePda.equals(rafflePubKey)) {
+                    console.error("PDA mismatch!")
+                    console.log("Derived:", rafflePda.toBase58())
+                    console.log("Expected:", rafflePubKey.toBase58())
+                    throw new Error("Raffle PDA derivation mismatch!")
+                }
                 const tx = await program?.methods
-                                .buyTickets(numTickets)
-                                .accounts({
-                                    buyer:publicKey,
-                                    buyerTokenAccont:tokenATA,
-                                    raffleAccount:rafflePda,
-                                    escrowPaymentAccount,
-                                    tokenProgram:TOKEN_PROGRAM_ID,
-                                    systemProgram:SystemProgram.programId,
-                                })
-                                .rpc()
-                console.log("tx:",tx)
+                    .buyTickets(numTickets)
+                    .accounts({
+                        buyer: publicKey,
+                        buyerTokenAccont: tokenATA,
+                        raffleAccount: rafflePda,
+                        escrowPaymentAccount,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        systemProgram: SystemProgram.programId,
+                    })
+                    .rpc()
+                console.log("tx:", tx)
                 return tx;
             } catch (error) {
-                console.log("error:",error)
+                console.log("error:", error)
                 throw error
             }
         }
