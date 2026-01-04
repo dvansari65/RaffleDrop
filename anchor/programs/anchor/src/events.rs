@@ -17,3 +17,19 @@ pub struct TicketsBought {
    pub raffle:Pubkey,
    pub number_of_tickets_bought:u8
 }
+
+#[event]
+#[derive(Debug)]
+pub struct  ProductShipped {
+    pub raffle: Pubkey,
+    pub winner: Pubkey,
+    pub shipped_at: Option<i64>,
+}
+
+#[event]
+#[derive(Debug)]
+pub struct  ProductDelivered {
+    pub raffle: Pubkey,
+    pub winner: Pubkey,
+    pub delivered_at: Option<i64>,
+}

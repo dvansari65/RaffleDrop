@@ -1,7 +1,7 @@
 use switchboard_on_demand::on_demand::accounts::pull_feed::PullFeedAccountData;
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, Token, TokenAccount,Transfer}};
-use crate::{error::RaffleError, types::{RaffleAccount, RaffleStatus}};
+use crate::{error::RaffleError, events::{ProductDelivered, ProductShipped}, types::{RaffleAccount, RaffleStatus}};
 
 declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
 
@@ -148,7 +148,7 @@ pub mod Raffle {
         let winner = raffle_account.participants[winner_index];
         raffle_account.winner = Some(winner);
         raffle_account.claimed = true;
-        raffle_account.product_delivered = false;
+        raffle_account.product_delivered_status = types::DeliveryStatus::Pending;
         // we are not moving assets till the product not delivered to the winner!
         raffle_account.randomness_account = Some(ctx.accounts.randomness_account_data.key());
         msg!("Winner selected successfully:{}",winner);
@@ -217,6 +217,36 @@ pub struct CreateRaffle<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
+pub fn mark_shipped (ctx:Context<MarkShipped>,tracking_info:Option<String>)->Result<()>{
+    let raffle_account = &mut ctx.accounts.raffle_account;
+    let clock = Clock::get()?.unix_timestamp;
+    raffle_account.tracking_info = tracking_info;
+    raffle_account.product_delivered_status = types::DeliveryStatus::Shipped;
+    raffle_account.shipped_at = Some(Clock::get()?.unix_timestamp);
+    
+    raffle_account.despute_deadline = Some(clock + (30*24*60*60));
+    emit!(ProductShipped {
+        raffle: raffle_account.key(),
+        winner: raffle_account.winner.unwrap(),
+        shipped_at: Some(clock),
+    });
+    
+    Ok(())
+}
+
+pub fn mark_delivered (ctx:Context<MarkDelivered>,tracking_info:Option<String>)->Result<()>{
+    let raffle = &mut ctx.accounts.raffle_account;
+    let clock = Clock::get()?.unix_timestamp;
+    raffle.tracking_info = tracking_info;
+    raffle.product_delivered_status = types::DeliveryStatus::Delivered;
+    emit!(ProductDelivered {
+        raffle: raffle.key(),
+        winner: raffle.winner.unwrap(),
+        delivered_at: Some(clock),
+    });
+    Ok(())
+}
+
 #[derive(Accounts)]
 pub struct  BuyTickets<'info> {
     #[account(mut)]
@@ -281,3 +311,36 @@ pub struct DrawWinner<'info>{
     pub system_program : Program<'info,System>
 }
 
+#[derive(Accounts)]
+pub struct MarkShipped<'info> {
+    #[account(mut)]
+    pub seller : Account<'info,TokenAccount>,
+
+    #[account(
+        mut,
+        seeds=[b"raffle_account",
+        raffle_account.seller.key().as_ref(),
+        &raffle_account.selling_price.to_le_bytes(),
+        &raffle_account.deadline.to_le_bytes()
+        ],
+        bump = raffle_account.bump
+    )]
+    pub raffle_account : Account<'info,RaffleAccount>
+}
+
+#[derive(Accounts)]
+pub struct MarkDelivered<'info> {
+    #[account(mut)]
+    pub buyer : Account<'info,TokenAccount>,
+
+    #[account(
+        mut,
+        seeds=[b"raffle_account",
+        raffle_account.seller.key().as_ref(),
+        &raffle_account.selling_price.to_le_bytes(),
+        &raffle_account.deadline.to_le_bytes()
+        ],
+        bump = raffle_account.bump
+    )]
+    pub raffle_account : Account<'info,RaffleAccount>
+}

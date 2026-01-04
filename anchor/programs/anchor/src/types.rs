@@ -25,10 +25,21 @@ pub struct RaffleAccount {
     pub claimed: bool,
     pub bump: u8,
     pub escrow_bump: u8,
-    pub product_delivered:bool
+    pub product_delivered_status:DeliveryStatus,
+    #[max_len(32)]
+    pub tracking_info: Option<String>,
+    pub shipped_at:Option<i64>,
+    pub despute_deadline:Option<i64>
 }
 
-
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq,Debug,InitSpace)]
+pub enum DeliveryStatus {
+    Pending,           // Winner selected, awaiting delivery
+    Shipped,           // Seller marked as shipped
+    Delivered,         // Winner confirmed delivery
+    Disputed,          // Winner disputes delivery
+    Resolved,          // Dispute resolved
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq,Copy,Debug,InitSpace)]
 pub enum RaffleStatus {
