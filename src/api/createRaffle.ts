@@ -1,4 +1,5 @@
 import { getPaymentMint } from "@/helpers/getPaymentMint"
+import { uploadToIPFS } from "@/helpers/uploadToIPFS"
 import { useCreateAssociatedToken } from "@/hooks/useCreateATA"
 import { useRaffleProgram } from "@/hooks/useRaffleProgram"
 import { CreateRaffleInputs } from "@/types/raffle"
@@ -19,7 +20,7 @@ export const CreateRaffle = ()=>{
         mutationKey:["create-raffle"],
         mutationFn:async({
             itemDescription,
-            itemImageUri,
+            itemImage,
             itemName,
             maxTickets,
             minTickets,
@@ -38,15 +39,26 @@ export const CreateRaffle = ()=>{
                 if(!sellerTokenAccount){
                     throw new Error("Seller token account not found!")
                 }
+                const [counterPda] = PublicKey.findProgramAddressSync(
+                    [
+                        Buffer.from("global-counter")
+                    ],
+                    program.programId
+                )
+                if(!counterPda){
+                    throw new Error("counter pda not found!")
+                }
                 const [rafflePda] = PublicKey.findProgramAddressSync(
                     [
                       Buffer.from("raffle"),
                       publicKey.toBuffer(),
-                      new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
-                      new BN(deadline).toArrayLike(Buffer, "le", 8)
+                      counterPda.toBuffer()
                     ],
                     program?.programId
                   )
+                
+                  console.log("raffleKey key:",rafflePda.toString())
+                  
                 if(!rafflePda){
                     throw new Error("Raffle pda not found!")
                 }
@@ -57,12 +69,17 @@ export const CreateRaffle = ()=>{
                     ],
                     program.programId
                 )
-                console.log("escrow payment account:",escrowPaymentAccount)
+                if(!itemImage){
+                    throw new Error("Image not found!")
+                }
+                const cid = await uploadToIPFS(itemImage)
+                  
+
                 const tx = await program.methods
                                 .createRaffle(
                                     itemName,
                                     itemDescription,
-                                    itemImageUri,
+                                    cid,
                                     new BN(sellingPrice),
                                     new BN(ticketPrice),
                                     minTickets,
