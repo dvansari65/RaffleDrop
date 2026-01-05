@@ -18,16 +18,8 @@ interface RaffleCardProps {
     onBuyTicket:(
         {
             maxTickets,
-            sellingPrice,
-            deadline,
-            sellerKey,
-            raffleKey
         }:{
             maxTickets:number,
-            sellingPrice:number,
-            deadline:number,
-            sellerKey:string ,
-            raffleKey:string
         }
     )=>void
 }
@@ -64,7 +56,7 @@ const RaffleCard: React.FC<RaffleCardProps> = ({
     const currentStatus = statusMap[status];
 
     const handleOpenModal = ()=>{
-        onBuyTicket({maxTickets,sellingPrice,deadline,sellerKey,raffleKey})
+        onBuyTicket({maxTickets})
     }
    
     return (
