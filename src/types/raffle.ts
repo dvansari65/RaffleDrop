@@ -2,7 +2,7 @@ import {PublicKey} from "@solana/web3.js"
 export interface CreateRaffleInputs {
     itemName: string,
     itemDescription: string,
-    itemImageUri: string,
+    itemImage: File | null,
     sellingPrice: number,
     ticketPrice: number,
     minTickets: number,
@@ -15,8 +15,5 @@ export type RaffleStatus = "active" | "drawing" | "completed" | "cancelled" | "r
 
 export interface buyTicketProps {
     numTickets:number,
-    sellingPrice:number,
-    deadline:number,
-    sellerPubKey: PublicKey; 
     rafflePubKey: PublicKey; 
 }
