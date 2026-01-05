@@ -9,7 +9,7 @@ pub struct RaffleAccount {
     pub item_name: String,
     #[max_len(64)]
     pub item_description: String,
-    #[max_len(64)]
+    #[max_len(128)]
     pub item_image_uri: String,
     pub selling_price: u64,
     pub ticket_price: u64,
@@ -30,6 +30,12 @@ pub struct RaffleAccount {
     pub tracking_info: Option<String>,
     pub shipped_at:Option<i64>,
     pub despute_deadline:Option<i64>
+}
+
+#[account]
+#[derive(Debug,InitSpace)]
+pub struct Counter {
+    pub counter:u64
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq,Debug,InitSpace)]
