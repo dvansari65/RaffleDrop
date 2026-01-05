@@ -1,5 +1,7 @@
 import { useCreateAssociatedToken } from "@/hooks/useCreateATA"
+import { useGetCounterPda } from "@/hooks/useGetCounterPda"
 import { useRaffleProgram } from "@/hooks/useRaffleProgram"
+import { getRafflePda } from "@/services/blockchain"
 import { buyTicketProps } from "@/types/raffle"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { useWallet } from "@solana/wallet-adapter-react"
@@ -12,10 +14,11 @@ import { BN } from "bn.js"
 export const buyTicket = () => {
     const { program } = useRaffleProgram()
     const { publicKey } = useWallet()
+    const {getCounterPda} = useGetCounterPda()
     const { createTokenAccount } = useCreateAssociatedToken()
     return useMutation<any, Error, buyTicketProps>({
         mutationKey: ["buy-ticket"],
-        mutationFn: async ({ numTickets, sellingPrice, deadline, sellerPubKey, rafflePubKey }: buyTicketProps) => {
+        mutationFn: async ({ numTickets, rafflePubKey }: buyTicketProps) => {
             try {
                 const tokenATA = await createTokenAccount()
                 if (!tokenATA) {
@@ -27,27 +30,17 @@ export const buyTicket = () => {
                 if (!program?.programId) {
                     throw new Error("Program id not found!")
                 }
-                // ADD DETAILED LOGGING
-                console.log("=== PDA Derivation Debug ===")
-                console.log("Seller PubKey:", sellerPubKey.toBase58())
-                console.log("Selling Price:", sellingPrice)
-                console.log("Deadline:", deadline)
-                console.log("Program ID:", program.programId.toBase58())
+        
+                const counterPda = getCounterPda()
+                const rafflePda = getRafflePda({counterPda,programId:program.programId})
 
-                // Log the actual buffer values
-                const sellingPriceBuffer = new BN(sellingPrice).toArrayLike(Buffer, "le", 8)
-                const deadlineBuffer = new BN(deadline).toArrayLike(Buffer, "le", 8)
-                console.log("Selling Price Buffer:", sellingPriceBuffer.toString('hex'))
-                console.log("Deadline Buffer:", deadlineBuffer.toString('hex'))
-                const [rafflePda] = PublicKey.findProgramAddressSync(
-                    [
-                        Buffer.from("raffle"),
-                        sellerPubKey.toBuffer(),
-                        new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
-                        new BN(deadline).toArrayLike(Buffer, "le", 8)
-                    ],
-                    program?.programId
-                )
+                if(!counterPda){
+                    throw new Error("Counter pda not found!")
+                }
+                if(!rafflePda){
+                    throw new Error("Raffle pda not found!")
+                }
+
                 const [escrowPaymentAccount] = PublicKey.findProgramAddressSync(
                     [
                         Buffer.from("escrow_payment"),
