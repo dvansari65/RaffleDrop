@@ -1,7 +1,7 @@
 use switchboard_on_demand::on_demand::accounts::pull_feed::PullFeedAccountData;
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token::{self, Mint, Token, TokenAccount,Transfer}};
-use crate::{error::RaffleError, events::{ProductDelivered, ProductShipped}, types::{RaffleAccount, RaffleStatus}};
+use crate::{error::RaffleError, events::{ProductDelivered, ProductShipped}, types::{Counter, RaffleAccount, RaffleStatus}};
 
 declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
 
@@ -15,6 +15,11 @@ pub mod Raffle {
     use crate::{ error::RaffleError, events::{RaffleCreated, TicketsBought}, types::RaffleStatus};
     use super::*;
 
+    pub fn initialise_counter (ctx: Context<InitializeCounter>)->Result<()>{
+        let counter = &mut ctx.accounts.counter;
+        counter.counter = 0;
+        Ok(())
+    }
     pub fn create_raffle(
         ctx: Context<CreateRaffle>,
         item_name: String,
@@ -28,7 +33,7 @@ pub mod Raffle {
     ) -> Result<()> {
         let raffle = &mut ctx.accounts.raffle_account;
         let clock = Clock::get()?;
-
+        let counter = &mut ctx.accounts.counter;
         // Input validation
         require!(selling_price > 0, RaffleError::InvalidPrice);
         require!(ticket_price > 0, RaffleError::InvalidPrice);
@@ -68,6 +73,10 @@ pub mod Raffle {
             ticket_price,
             deadline ,
         });
+        counter.counter = counter   
+                        .counter
+                        .checked_add(1)
+                        .ok_or(RaffleError::Overflow)?;
 
         Ok(())
     }
@@ -154,6 +163,35 @@ pub mod Raffle {
         msg!("Winner selected successfully:{}",winner);
         Ok(())
     }
+    pub fn mark_shipped (ctx:Context<MarkShipped>,tracking_info:Option<String>)->Result<()>{
+        let raffle_account = &mut ctx.accounts.raffle_account;
+        let clock = Clock::get()?.unix_timestamp;
+        raffle_account.tracking_info = tracking_info;
+        raffle_account.product_delivered_status = types::DeliveryStatus::Shipped;
+        raffle_account.shipped_at = Some(Clock::get()?.unix_timestamp);
+        
+        raffle_account.despute_deadline = Some(clock + (30*24*60*60));
+        emit!(ProductShipped {
+            raffle: raffle_account.key(),
+            winner: raffle_account.winner.unwrap(),
+            shipped_at: Some(clock),
+        });
+        
+        Ok(())
+    }
+    
+    pub fn mark_delivered (ctx:Context<MarkDelivered>,tracking_info:Option<String>)->Result<()>{
+        let raffle = &mut ctx.accounts.raffle_account;
+        let clock = Clock::get()?.unix_timestamp;
+        raffle.tracking_info = tracking_info;
+        raffle.product_delivered_status = types::DeliveryStatus::Delivered;
+        emit!(ProductDelivered {
+            raffle: raffle.key(),
+            winner: raffle.winner.unwrap(),
+            delivered_at: Some(clock),
+        });
+        Ok(())
+    }
     
 }
 
@@ -172,6 +210,12 @@ pub struct CreateRaffle<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
 
+    #[account(
+        mut,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,Counter>,
     /// Payment token mint (USDC, SOL wrapped, etc.)
     pub payment_mint: Account<'info,token:: Mint>,
 
@@ -191,8 +235,7 @@ pub struct CreateRaffle<'info> {
         seeds = [
             b"raffle",
             seller.key().as_ref(),
-            &selling_price.to_le_bytes(),
-            &deadline.to_le_bytes()
+            counter.counter.to_le_bytes().as_ref()
         ],
         bump
     )]
@@ -217,35 +260,6 @@ pub struct CreateRaffle<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn mark_shipped (ctx:Context<MarkShipped>,tracking_info:Option<String>)->Result<()>{
-    let raffle_account = &mut ctx.accounts.raffle_account;
-    let clock = Clock::get()?.unix_timestamp;
-    raffle_account.tracking_info = tracking_info;
-    raffle_account.product_delivered_status = types::DeliveryStatus::Shipped;
-    raffle_account.shipped_at = Some(Clock::get()?.unix_timestamp);
-    
-    raffle_account.despute_deadline = Some(clock + (30*24*60*60));
-    emit!(ProductShipped {
-        raffle: raffle_account.key(),
-        winner: raffle_account.winner.unwrap(),
-        shipped_at: Some(clock),
-    });
-    
-    Ok(())
-}
-
-pub fn mark_delivered (ctx:Context<MarkDelivered>,tracking_info:Option<String>)->Result<()>{
-    let raffle = &mut ctx.accounts.raffle_account;
-    let clock = Clock::get()?.unix_timestamp;
-    raffle.tracking_info = tracking_info;
-    raffle.product_delivered_status = types::DeliveryStatus::Delivered;
-    emit!(ProductDelivered {
-        raffle: raffle.key(),
-        winner: raffle.winner.unwrap(),
-        delivered_at: Some(clock),
-    });
-    Ok(())
-}
 
 #[derive(Accounts)]
 pub struct  BuyTickets<'info> {
@@ -257,10 +271,17 @@ pub struct  BuyTickets<'info> {
 
     #[account(
         mut,
-        seeds = [b"raffle",raffle_account.seller.key().as_ref(),&raffle_account.selling_price.to_le_bytes(),&raffle_account.deadline.to_le_bytes()],
+        seeds = [b"raffle",raffle_account.seller.key().as_ref(),counter.counter.to_le_bytes().as_ref()],
         bump = raffle_account.bump
     )]
     pub raffle_account : Account<'info,RaffleAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,Counter>,
 
     #[account(
         mut,
@@ -282,8 +303,7 @@ pub struct DrawWinner<'info>{
         mut,
         seeds=[b"raffle_account",
         raffle_account.seller.key().as_ref(),
-        &raffle_account.selling_price.to_le_bytes(),
-        &raffle_account.deadline.to_le_bytes()
+        counter.counter.to_le_bytes().as_ref()
         ],
         bump = raffle_account.bump,
         constraint = raffle_account.seller.key() == selller.key() @ RaffleError::Unauthorized,
@@ -291,6 +311,13 @@ pub struct DrawWinner<'info>{
         constraint = raffle_account.participants.len() > 0 @ RaffleError::NoParticipants,
     )]
     pub raffle_account:Account<'info,RaffleAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,Counter>,
 
     #[account(mut)]
     pub winner_token_account:Account<'info,token::TokenAccount>,
@@ -320,12 +347,18 @@ pub struct MarkShipped<'info> {
         mut,
         seeds=[b"raffle_account",
         raffle_account.seller.key().as_ref(),
-        &raffle_account.selling_price.to_le_bytes(),
-        &raffle_account.deadline.to_le_bytes()
+        counter.counter.to_le_bytes().as_ref()
         ],
         bump = raffle_account.bump
     )]
-    pub raffle_account : Account<'info,RaffleAccount>
+    pub raffle_account : Account<'info,RaffleAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,Counter>,
 }
 
 #[derive(Accounts)]
@@ -337,10 +370,33 @@ pub struct MarkDelivered<'info> {
         mut,
         seeds=[b"raffle_account",
         raffle_account.seller.key().as_ref(),
-        &raffle_account.selling_price.to_le_bytes(),
-        &raffle_account.deadline.to_le_bytes()
+        counter.counter.to_le_bytes().as_ref()
         ],
         bump = raffle_account.bump
     )]
-    pub raffle_account : Account<'info,RaffleAccount>
+    pub raffle_account : Account<'info,RaffleAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,Counter>,
+}
+
+
+#[derive(Accounts)]
+pub struct InitializeCounter<'info> {
+    #[account(
+        init,
+        payer = signer,
+        space = 8 + types::Counter::INIT_SPACE,
+        seeds = [b"global-counter"],
+        bump
+    )]
+    pub counter : Account<'info,types::Counter>,
+    #[account(mut)]
+    pub signer : Signer<'info>,
+    
+    pub system_program : Program<'info,System>
 }
