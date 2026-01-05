@@ -33,3 +33,10 @@ export const getEscrowPda = (raffleKey: PublicKey, programId: PublicKey) => {
   
   return pda;
 }
+export const getCounterPda = (programId:PublicKey)=>{
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from("global-counter")],
+    programId
+  )
+  return pda
+}
