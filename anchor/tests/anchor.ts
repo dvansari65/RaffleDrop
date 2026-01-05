@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, Keypair, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, Keypair, Connection, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
 import { 
   TOKEN_PROGRAM_ID, 
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -11,6 +11,7 @@ import {
 } from "@solana/spl-token";
 import { Raffle } from "../target/types/Raffle";
 import { expect } from "chai";
+import { BN } from "bn.js";
 
 // Helper to wait for confirmation
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -565,5 +566,33 @@ describe("Raffle Program", () => {
       console.error("Unexpected error:", error);
       throw new Error(`Expected InvalidDeadline error but got: ${error.message || errorString}`);
     }
+  })
+  it("initialise the counter!",async()=>{
+    let counter = new BN(0)
+    const signer = Keypair.generate()
+    const [counterPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("global-counter"),
+      ],
+      program.programId
+    )
+    const connection = program.provider.connection;
+    await connection.confirmTransaction(
+      await connection.requestAirdrop(signer.publicKey,2 * anchor.web3.LAMPORTS_PER_SOL)
+    )
+    
+    const tx = await program.methods
+              .initialiseCounter()
+              .accounts({
+                counter:counterPda,
+                signer:signer.publicKey,
+                systemProgram:anchor.web3.SystemProgram.programId
+              })
+              .signers([signer])
+              .rpc()
+   
+    const accountInfo = program.account.counter.fetch(counterPda)
+    
+    expect((await accountInfo).counter.eq(counter),"Counter not equal to zero")
   });
 });

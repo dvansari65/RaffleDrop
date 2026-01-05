@@ -18,8 +18,6 @@ export default function ExplorePage() {
   const { data, isLoading } = useRaffleAccount();
   const [numberOfTickets, setNumberOfTickets] = useState<number | null>(null);
   const [ticketPrice, setTicketPrice] = useState<number | null>(null)
-  const [deadline, setDeadline] = useState(0)
-  const [sellerKey,setSellerkey] = useState("")
   const [raffleKey,setRaffleKey] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [error, setError] = useState("")
@@ -27,22 +25,11 @@ export default function ExplorePage() {
 
   const handleBuyTicket = () => {
     console.log("hiting....")
-    if(deadline > Date.now()){
-      setError("Dead line passed!")
-      return;
-    }
-    if(!sellerKey){
-      setError("Seller of this Raffle not found!")
-      return;
-    }
+   
     const payload:buyTicketProps = {
       numTickets:numberOfTickets ?? 0,
-      sellingPrice:ticketPrice ?? 0,
-      deadline,
-      sellerPubKey:new PublicKey(sellerKey),
       rafflePubKey:new PublicKey(raffleKey)
     }
-    console.log("deadline:",deadline.toString())
     mutate(payload,{
       onSuccess:(tx)=>{
         if(!tx){
@@ -59,14 +46,10 @@ export default function ExplorePage() {
   const handleOpenModal = ({ 
     maxTickets, 
     ticketPrice, 
-    deadline,
-    sellerKey,
     raffleKey
    }: { 
     maxTickets: number | null, 
     ticketPrice: number | null, 
-    deadline: number,
-    sellerKey:string,
     raffleKey:string
     }) => {
 
@@ -75,8 +58,6 @@ export default function ExplorePage() {
       return;
     }
     setRaffleKey(raffleKey)
-    setSellerkey(sellerKey)
-    setDeadline(deadline)
     setNumberOfTickets(maxTickets);
     setTicketPrice(ticketPrice)
     setIsModalOpen(true)
@@ -250,8 +231,6 @@ export default function ExplorePage() {
                       onBuyTicket={() => handleOpenModal({ 
                         maxTickets: raffle.account.maxTickets, 
                         ticketPrice: Number(raffle.account.ticketPrice),
-                        deadline:Number(raffle.account.deadline),
-                        sellerKey:raffle.account.seller.toString(),
                         raffleKey:raffle.publicKey.toString()
                        })}
                     />
