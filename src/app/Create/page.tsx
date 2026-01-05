@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 function page() {
   const [itemName, setItemName] = useState("")
   const [itemDescription, setItemDescription] = useState("")
-  const [url, setUrl] = useState("")
+  const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState('');
   const [deadline, setDeadline] = useState("")
   const [sellingPrice, setSellingPrice] = useState(0)
@@ -23,7 +23,7 @@ function page() {
   const isFormValid = () => {
     return itemName &&
       itemDescription &&
-      url &&
+      image &&
       sellingPrice &&
       ticketPrice &&
       minTickets &&
@@ -38,7 +38,7 @@ function page() {
     const payload:CreateRaffleInputs = {
       itemName,
       itemDescription,
-      itemImageUri:url,
+      itemImage:image,
       sellingPrice,
       ticketPrice,
       minTickets,
@@ -159,11 +159,13 @@ function page() {
                     </label>
                     <div className="space-y-3">
                       <input
-                        type="url"
-                        value={url}
+                        type="file"
+                       
                         onChange={(e) => {
-                          setUrl(e.target.value);
-                          setImagePreview(e.target.value);
+                          const file = e.target.files?.[0]
+                          if (!file) return;
+                          setImage(file);
+                          setImagePreview(URL.createObjectURL(file));
                         }}
                         placeholder="https://example.com/image.jpg"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-mono"
