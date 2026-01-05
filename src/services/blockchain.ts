@@ -1,25 +1,20 @@
 import { PublicKey } from '@solana/web3.js'
-import { BN, Program } from "@coral-xyz/anchor"
 
 interface GetRafflePdaProps {
-  sellerKey: PublicKey,
-  sellingPrice: number,
-  deadline: number,
+ counterPda:PublicKey,
   programId: PublicKey
 }
 
+
 export const getRafflePda = ({
-  sellerKey,
-  sellingPrice,
-  deadline,
+  counterPda,
   programId
 }: GetRafflePdaProps) => {
+  
   const [pda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("raffle"),
-      sellerKey.toBuffer(),
-      new BN(sellingPrice).toArrayLike(Buffer, "le", 8),
-      new BN(deadline).toArrayLike(Buffer, "le", 8)
+      counterPda.toBuffer()
     ],
     programId
   )
