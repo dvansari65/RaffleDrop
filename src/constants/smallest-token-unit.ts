@@ -1,0 +1,1 @@
+export const SMALLEST_TOKEN_UNIT=1000000
