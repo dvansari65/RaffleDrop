@@ -13,10 +13,10 @@ function page() {
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState('');
   const [deadline, setDeadline] = useState("")
-  const [sellingPrice, setSellingPrice] = useState(0)
-  const [ticketPrice, setTicketPrice] = useState(0)
+  const [sellingPrice, setSellingPrice] = useState<number | null>(null)
+  const [ticketPrice, setTicketPrice] = useState<number | null>(null)
   const [minTickets, setMinTickets] = useState(1)
-  const [maxTickets, setMaxTickets] = useState(0)
+  const [maxTickets, setMaxTickets] = useState<number | null>(null)
 
   const {mutate,isPending} = CreateRaffle()
   const queryClient = useQueryClient()
@@ -160,7 +160,6 @@ function page() {
                     <div className="space-y-3">
                       <input
                         type="file"
-                       
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (!file) return;
@@ -214,7 +213,7 @@ function page() {
                     </label>
                     <input
                       type="number"
-                      value={sellingPrice}
+                      value={sellingPrice || ""}
                       onChange={(e) => setSellingPrice(Number(e.target.value))}
                       placeholder="599"
                       className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all font-mono"
@@ -229,7 +228,7 @@ function page() {
                     </label>
                     <input
                       type="number"
-                      value={ticketPrice}
+                      value={ticketPrice || ""}
                       onChange={(e) => setTicketPrice(Number(e.target.value))}
                       placeholder="5"
                       className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all font-mono"
@@ -276,7 +275,7 @@ function page() {
                     </label>
                     <input
                       type="number"
-                      value={maxTickets}
+                      value={maxTickets || ""}
                       onChange={(e) => setMaxTickets(Number(e.target.value))}
                       placeholder="100"
                       min="1"
