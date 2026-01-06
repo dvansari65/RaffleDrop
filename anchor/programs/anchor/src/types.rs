@@ -4,6 +4,9 @@ use anchor_lang::prelude::*;
 #[derive(Debug,InitSpace)]
 pub struct RaffleAccount {
     pub seller: Pubkey,
+    pub is_sold_out:bool,
+    pub progress:u32,
+    pub total_entries:u64, // Total tickets sold
     pub payment_mint: Pubkey,
     #[max_len(32)]
     pub item_name: String,
