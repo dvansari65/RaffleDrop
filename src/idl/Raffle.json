@@ -31,34 +31,31 @@
         },
         {
           "name": "raffle_account",
+          "writable": true
+        },
+        {
+          "name": "counter",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  114,
-                  97,
-                  102,
-                  102,
+                  103,
                   108,
-                  101
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
                 ]
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.seller",
-                "account": "RaffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.selling_price",
-                "account": "RaffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.deadline",
-                "account": "RaffleAccount"
               }
             ]
           }
@@ -129,6 +126,33 @@
           "signer": true
         },
         {
+          "name": "counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "payment_mint",
           "docs": [
             "Payment token mint (USDC, SOL wrapped, etc.)"
@@ -165,12 +189,9 @@
                 "path": "seller"
               },
               {
-                "kind": "arg",
-                "path": "selling_price"
-              },
-              {
-                "kind": "arg",
-                "path": "deadline"
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
               }
             ]
           }
@@ -264,9 +285,393 @@
           "type": "i64"
         }
       ]
+    },
+    {
+      "name": "draw_winner",
+      "discriminator": [
+        250,
+        103,
+        118,
+        147,
+        219,
+        235,
+        169,
+        220
+      ],
+      "accounts": [
+        {
+          "name": "randomness_account_data"
+        },
+        {
+          "name": "raffle_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  102,
+                  102,
+                  108,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raffle_account.seller",
+                "account": "RaffleAccount"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "winner_token_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_payment_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119,
+                  95,
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raffle_account.seller",
+                "account": "RaffleAccount"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "selller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialise_counter",
+      "discriminator": [
+        85,
+        25,
+        135,
+        234,
+        240,
+        145,
+        129,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "mark_delivered",
+      "discriminator": [
+        240,
+        118,
+        188,
+        142,
+        64,
+        85,
+        107,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true
+        },
+        {
+          "name": "raffle_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  102,
+                  102,
+                  108,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raffle_account.seller",
+                "account": "RaffleAccount"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "tracking_info",
+          "type": {
+            "option": "string"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mark_shipped",
+      "discriminator": [
+        239,
+        5,
+        66,
+        105,
+        238,
+        17,
+        89,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true
+        },
+        {
+          "name": "raffle_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  102,
+                  102,
+                  108,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raffle_account.seller",
+                "account": "RaffleAccount"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "counter",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  45,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "tracking_info",
+          "type": {
+            "option": "string"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
+    {
+      "name": "Counter",
+      "discriminator": [
+        255,
+        176,
+        4,
+        245,
+        188,
+        253,
+        124,
+        25
+      ]
+    },
     {
       "name": "RaffleAccount",
       "discriminator": [
@@ -282,6 +687,32 @@
     }
   ],
   "events": [
+    {
+      "name": "ProductDelivered",
+      "discriminator": [
+        186,
+        173,
+        91,
+        163,
+        189,
+        234,
+        114,
+        131
+      ]
+    },
+    {
+      "name": "ProductShipped",
+      "discriminator": [
+        91,
+        178,
+        86,
+        185,
+        155,
+        204,
+        16,
+        129
+      ]
+    },
     {
       "name": "RaffleCreated",
       "discriminator": [
@@ -399,9 +830,103 @@
       "code": 6017,
       "name": "MinTicketsReached",
       "msg": "Min tickets reached"
+    },
+    {
+      "code": 6018,
+      "name": "Unauthorized",
+      "msg": "Unauthorise request!"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidRandomnessAccount",
+      "msg": "Invalid randomness account data!"
+    },
+    {
+      "code": 6020,
+      "name": "RandomnessTooOld",
+      "msg": "Random data too old!"
     }
   ],
   "types": [
+    {
+      "name": "Counter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "counter",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeliveryStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Shipped"
+          },
+          {
+            "name": "Delivered"
+          },
+          {
+            "name": "Disputed"
+          },
+          {
+            "name": "Resolved"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProductDelivered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raffle",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "delivered_at",
+            "type": {
+              "option": "i64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProductShipped",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raffle",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "shipped_at",
+            "type": {
+              "option": "i64"
+            }
+          }
+        ]
+      }
+    },
     {
       "name": "RaffleAccount",
       "type": {
@@ -466,6 +991,12 @@
             }
           },
           {
+            "name": "randomness_account",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
             "name": "winner",
             "type": {
               "option": "pubkey"
@@ -482,6 +1013,32 @@
           {
             "name": "escrow_bump",
             "type": "u8"
+          },
+          {
+            "name": "product_delivered_status",
+            "type": {
+              "defined": {
+                "name": "DeliveryStatus"
+              }
+            }
+          },
+          {
+            "name": "tracking_info",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "shipped_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "despute_deadline",
+            "type": {
+              "option": "i64"
+            }
           }
         ]
       }
