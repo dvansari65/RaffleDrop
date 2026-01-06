@@ -851,6 +851,16 @@ export type Raffle = {
       "code": 6020,
       "name": "randomnessTooOld",
       "msg": "Random data too old!"
+    },
+    {
+      "code": 6021,
+      "name": "enrtiesFull",
+      "msg": "Entries full! You missed the opportunity!"
+    },
+    {
+      "code": 6022,
+      "name": "underFlow",
+      "msg": "Arithmetic under flow"
     }
   ],
   "types": [
@@ -941,6 +951,18 @@ export type Raffle = {
           {
             "name": "seller",
             "type": "pubkey"
+          },
+          {
+            "name": "isSoldOut",
+            "type": "bool"
+          },
+          {
+            "name": "progress",
+            "type": "u32"
+          },
+          {
+            "name": "totalEntries",
+            "type": "u64"
           },
           {
             "name": "paymentMint",
