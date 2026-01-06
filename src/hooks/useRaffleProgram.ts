@@ -3,7 +3,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { PublicKey } from "@solana/web3.js"
 import idl from "../idl/Raffle.json"
 import { useMemo } from "react";
-import { Raffle } from "@/types/RaffleTypes";
+import {Raffle} from "../types/RaffleType"
 
 // Read-only wallet for fetching data without connection
 class ReadOnlyWallet {
@@ -35,7 +35,7 @@ export const useRaffleProgram = () => {
       provider
     );
   }, [provider]);
-
+  
   return {
     program,
     provider,
