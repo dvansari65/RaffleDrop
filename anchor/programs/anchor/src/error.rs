@@ -43,5 +43,9 @@ pub enum RaffleError {
     #[msg("Invalid randomness account data!")]
     InvalidRandomnessAccount,
     #[msg("Random data too old!")]
-    RandomnessTooOld
+    RandomnessTooOld,
+    #[msg("Entries full! You missed the opportunity!")]
+    EnrtiesFull,
+    #[msg("Arithmetic under flow")]
+    UnderFlow,
 }
