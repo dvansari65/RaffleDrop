@@ -845,6 +845,16 @@
       "code": 6020,
       "name": "RandomnessTooOld",
       "msg": "Random data too old!"
+    },
+    {
+      "code": 6021,
+      "name": "EnrtiesFull",
+      "msg": "Entries full! You missed the opportunity!"
+    },
+    {
+      "code": 6022,
+      "name": "UnderFlow",
+      "msg": "Arithmetic under flow"
     }
   ],
   "types": [
@@ -935,6 +945,18 @@
           {
             "name": "seller",
             "type": "pubkey"
+          },
+          {
+            "name": "is_sold_out",
+            "type": "bool"
+          },
+          {
+            "name": "progress",
+            "type": "u32"
+          },
+          {
+            "name": "total_entries",
+            "type": "u64"
           },
           {
             "name": "payment_mint",
