@@ -1,20 +1,26 @@
-import axios from "axios";
-
 export async function uploadToIPFS(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const res = await axios.post(
-    "https://api.pinata.cloud/pinning/pinFileToIPFS",
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        pinata_api_key: process.env.NEXT_PUBLIC_PINATA_KEY!,
-        pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_SECRET!,
-      },
+    try {
+      if (!file) {
+        throw new Error("No file provided");
+      }
+  
+      const formData = new FormData();
+      formData.append("file", file);
+  
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await response.json();
+      console.log("data:",data)
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Upload failed");
+      }
+      // Return the CID for storing in your raffle
+      return data.cid;
+    } catch (error: any) {
+      console.error("❌ IPFS Upload Error:", error.message);
+      throw new Error(`Failed to upload to IPFS: ${error.message}`);
     }
-  );
-
-  return res.data.IpfsHash; 
-}
+  }
