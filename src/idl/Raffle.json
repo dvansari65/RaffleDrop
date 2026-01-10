@@ -86,7 +86,13 @@
               },
               {
                 "kind": "account",
-                "path": "raffle_account"
+                "path": "raffle_account.seller",
+                "account": "RaffleAccount"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
               }
             ]
           }
@@ -226,7 +232,12 @@
               },
               {
                 "kind": "account",
-                "path": "raffle_account"
+                "path": "seller"
+              },
+              {
+                "kind": "account",
+                "path": "counter.counter",
+                "account": "Counter"
               }
             ]
           }
@@ -855,6 +866,11 @@
       "code": 6022,
       "name": "UnderFlow",
       "msg": "Arithmetic under flow"
+    },
+    {
+      "code": 6023,
+      "name": "RaffleFull",
+      "msg": "Participants full!"
     }
   ],
   "types": [
@@ -1128,6 +1144,14 @@
           {
             "name": "number_of_tickets_bought",
             "type": "u8"
+          },
+          {
+            "name": "total_tickets_now",
+            "type": "u64"
+          },
+          {
+            "name": "total_participants_now",
+            "type": "u32"
           }
         ]
       }

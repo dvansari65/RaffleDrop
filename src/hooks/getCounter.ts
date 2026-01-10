@@ -1,19 +1,20 @@
 
-import { getCounterPubkey } from "@/helpers/getCounterPubkey"
 import { useRaffleProgram } from "./useRaffleProgram"
 import {PublicKey} from "@solana/web3.js"
 
 export const useGetCounter = ()=>{
     const {program} = useRaffleProgram()
-    const counterKey = getCounterPubkey()
+    
     const getCounterValue = async ()=>{
         try {
-            if(!counterKey){
-                throw new Error("Counter key not found!")
-            }
-            const counterInfo = await program.account.counter.fetch(counterKey,"confirmed")
+            const [counterPda] = PublicKey.findProgramAddressSync(
+                [Buffer.from("global-counter")], 
+                program.programId
+            )
+            const counterInfo = await program.account.counter.fetch(counterPda,"confirmed")
             return counterInfo.counter
         } catch (error) {
+            console.error("counter value error:",error)
             throw error;
         }
     }

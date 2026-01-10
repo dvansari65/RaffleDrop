@@ -1,3 +1,4 @@
+import { SMALLEST_TOKEN_UNIT } from "@/constants/smallest-token-unit";
 import { ChangeEvent, useState } from "react";
 
 interface BuyTicketModalProps {
@@ -44,7 +45,7 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
 
     if (!ticketPrice) return
 
-    const totalCost = ticketCount ? (Number(ticketCount) * ticketPrice).toFixed(2) : "0.00";
+    const totalCost = ticketCount ? (Number(ticketCount) * (ticketPrice)/SMALLEST_TOKEN_UNIT).toFixed(2) : "0.00";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -123,7 +124,7 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-slate-400 font-mono">Ticket Price</p>
-                                    <p className="text-lg font-bold text-amber-400">{ticketPrice} SOL</p>
+                                    <p className="text-lg font-bold text-amber-400">{ticketPrice/SMALLEST_TOKEN_UNIT} SOL</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-400 font-mono">Total Cost</p>

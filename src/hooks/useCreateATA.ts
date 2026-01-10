@@ -9,10 +9,7 @@ export const useCreateAssociatedToken = () => {
   const { connection } = useConnection()
 
   const createTokenAccount = async () => {
-    console.log("🚀 Starting createTokenAccount...")
-    console.log("💰 Payment Mint:", paymentMint.toString())
-    console.log("👛 Wallet PublicKey:", publicKey?.toString())
-    
+
     try {
       // Check wallet connection
       if (!publicKey) {

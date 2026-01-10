@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Debug,InitSpace)]
 pub struct RaffleAccount {
+    pub raffle_id:u64,
     pub seller: Pubkey,
     pub is_sold_out:bool,
     pub progress:u32,

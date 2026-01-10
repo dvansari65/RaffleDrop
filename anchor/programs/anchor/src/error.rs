@@ -48,4 +48,6 @@ pub enum RaffleError {
     EnrtiesFull,
     #[msg("Arithmetic under flow")]
     UnderFlow,
+    #[msg("Participants full!")]
+    RaffleFull
 }

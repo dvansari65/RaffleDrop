@@ -8,14 +8,16 @@ export const useRaffleAccount = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["raffle-accounts"],
     queryFn: async () => {
-
       try {
         const accounts = await program.account.raffleAccount.all()
+        console.log("accounts:",accounts)
         if (!accounts || accounts.length === 0) {
           return []
         }
+        console.log("dataaa:",accounts)
         return accounts
       } catch (error: any) {
+        console.log("error:",error)
         if (
           error.message?.includes("Account does not exist") ||
           error.message?.includes("Invalid account discriminator") ||

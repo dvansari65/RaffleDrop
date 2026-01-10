@@ -35,6 +35,16 @@ pub mod Raffle {
         let clock = Clock::get()?;
         let counter = &mut ctx.accounts.counter;
 
+        if counter.counter == 0 {
+            // You might want to add more validation here
+            counter.counter = 1; // Start from 1
+        } else {
+            counter.counter = counter
+                .counter
+                .checked_add(1)
+                .ok_or(RaffleError::Overflow)?;
+        }
+        let raffle_id = &mut ctx.accounts.counter.counter;
         // Token decimals constant
         const DECIMALS: u64 = 1_000_000; // 10^6 for 6 decimals
         
@@ -49,6 +59,7 @@ pub mod Raffle {
         let selling_price_with_decimals = selling_price
             .checked_mul(DECIMALS)
             .ok_or(RaffleError::Overflow)?;
+
         let ticket_price_with_decimals = ticket_price
             .checked_mul(DECIMALS)
             .ok_or(RaffleError::Overflow)?;
@@ -73,73 +84,100 @@ pub mod Raffle {
         raffle.escrow_bump = ctx.bumps.escrow_payment_account;
         raffle.is_sold_out = false;
         raffle.total_entries = 0;
+        raffle.raffle_id = *raffle_id;
         emit!(RaffleCreated {
             raffle: raffle.key(),
             seller: raffle.seller,
             ticket_price: ticket_price_with_decimals,
             deadline,
-        });
-        
-        counter.counter = counter
-            .counter
-            .checked_add(1)
-            .ok_or(RaffleError::Overflow)?;
-        
+        });  
         Ok(())
     }
-    pub fn buy_tickets (
+    pub fn buy_tickets(
         ctx: Context<BuyTickets>,
-        num_tickets:u8
-    )->Result<()>{
+        num_tickets: u8
+    ) -> Result<()> {
         let raffle_account = &mut ctx.accounts.raffle_account;
         let clock = Clock::get()?.unix_timestamp;
         let escrow_account = &mut ctx.accounts.escrow_payment_account;
         let buyer = &mut ctx.accounts.buyer;
-        require!(raffle_account.status == RaffleStatus::Active,RaffleError::RaffleNotActive);
-        require!(num_tickets > 0,RaffleError::InvalidTicketCount);
-        require!(raffle_account.deadline > clock,RaffleError::DeadlinePassed);
-        require!(raffle_account.total_entries  <= raffle_account.participants.len() as u64 ,RaffleError::EnrtiesFull);
+        
+        let buyer_key = buyer.key();
+
+        require!(raffle_account.participants.len() < 32 , RaffleError::RaffleFull);
+        // Basic validations
+        require!(raffle_account.status == RaffleStatus::Active, RaffleError::RaffleNotActive);
+        require!(num_tickets > 0, RaffleError::InvalidTicketCount);
+        require!(raffle_account.deadline > clock, RaffleError::DeadlinePassed);
+        require!(raffle_account.is_sold_out == false, RaffleError::TicketsAlreadySold);
+        
+        // CRITICAL FIX: Check if adding num_tickets will exceed the 32 participant limit
+        let current_participants = raffle_account.participants.len();
+        let future_participants = current_participants
+            .checked_add(num_tickets as usize)
+            .ok_or(RaffleError::Overflow)?;
+        msg!("current participantsL:{} and future participants:{} ",current_participants,future_participants);
+        // Check against both the vec max_len (32) AND max_tickets
         require!(
-            raffle_account.participants.len() + num_tickets as usize <= raffle_account.max_tickets as usize,
+            future_participants <= 32,
+            RaffleError::RaffleFull
+        );
+        
+        require!(
+            future_participants <= raffle_account.max_tickets as usize,
             RaffleError::MaxTicketsReached
         );
-        require!(raffle_account.is_sold_out == false,RaffleError::TicketsAlreadySold);
+        
+        // Calculate total price
         let total_price = (num_tickets as u64)
-                            .checked_mul(raffle_account.ticket_price)
-                            .ok_or(RaffleError::Overflow)?;
-
+            .checked_mul(raffle_account.ticket_price)
+            .ok_or(RaffleError::Overflow)?;
+        
+        // Transfer tokens to escrow
         let cpi_accounts = Transfer {
-            from:ctx.accounts.buyer_token_accont.to_account_info(),
-            to:escrow_account.to_account_info(),
-            authority:buyer.to_account_info()
+            from: ctx.accounts.buyer_token_accont.to_account_info(),
+            to: escrow_account.to_account_info(),
+            authority: buyer.to_account_info()
         };
-        let cpi_program =  ctx.accounts.token_program.to_account_info();
+        let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, total_price)?;
         
-        raffle_account.total_collected = raffle_account 
-                                            .total_collected
-                                            .checked_add(total_price)
-                                            .ok_or(RaffleError::Overflow)?;
-       
-        for _ in 0..num_tickets  {  
+        // Update total collected
+        raffle_account.total_collected = raffle_account
+            .total_collected
+            .checked_add(total_price)
+            .ok_or(RaffleError::Overflow)?;
+        
+        // Add participants (each ticket = one entry)
+        for _ in 0..num_tickets {
             raffle_account.participants.push(buyer.key());
-        };
-
-        let entries = raffle_account.total_entries;
-        let max_tickets = raffle_account.max_tickets;
-
-        if entries >= max_tickets  as u64{
-            raffle_account.is_sold_out = true
         }
-        let progress = RaffleAccount::calculate_progress(raffle_account, &entries, &max_tickets)?;
-
+         // FIX: Increment total_entries by num_tickets, not by 1
+         raffle_account.total_entries = raffle_account
+         .total_entries
+         .checked_add(num_tickets as u64)
+         .ok_or(RaffleError::Overflow)?;
+        
+        // Check if sold out based on participants length
+        let max_tickets = raffle_account.max_tickets;
+        if raffle_account.participants.len() >= max_tickets as usize {
+            raffle_account.is_sold_out = true;
+        }
+        // Calculate progress
+        let progress = RaffleAccount::calculate_progress(
+            raffle_account.total_entries,  // ← No reference, just value
+            max_tickets
+        )?;
         raffle_account.progress = progress;
-
-        emit!(TicketsBought{
-            buyer:buyer.key(),
-            raffle:raffle_account.key(),
-            number_of_tickets_bought:num_tickets
+        
+        // Emit event
+        emit!(TicketsBought {
+            buyer: buyer_key,
+            raffle: raffle_account.key(),
+            number_of_tickets_bought: num_tickets,
+            total_tickets_now: raffle_account.total_entries,
+            total_participants_now: raffle_account.participants.len() as u32
         });
         
         Ok(())
@@ -267,7 +305,7 @@ pub struct CreateRaffle<'info> {
     #[account(
         init,
         payer = seller,
-        seeds = [b"escrow_payment",raffle_account.key().as_ref()],
+        seeds = [b"escrow_payment",seller.key().as_ref(),],
         bump,
         token::mint = payment_mint,
         token::authority = raffle_account,
@@ -290,9 +328,12 @@ pub struct  BuyTickets<'info> {
     #[account(mut)]
     pub buyer_token_accont : Account<'info,token::TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = raffle_account.participants.len() < 32 @ RaffleError::RaffleFull
+    )]
     pub raffle_account: Account<'info, RaffleAccount>,
-
+    
     #[account(
         mut,
         seeds = [b"global-counter"],
@@ -302,7 +343,7 @@ pub struct  BuyTickets<'info> {
 
     #[account(
         mut,
-        seeds = [b"escrow_payment",raffle_account.key().as_ref()],
+        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&counter.counter.to_le_bytes()],
         bump
     )]
     pub escrow_payment_account : Account<'info,token::TokenAccount>,
@@ -340,7 +381,7 @@ pub struct DrawWinner<'info>{
     pub winner_token_account:Account<'info,token::TokenAccount>,
     #[account(
         mut,
-        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(), &counter.counter.to_le_bytes()],
+        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&counter.counter.to_le_bytes()],
         bump
     )]
     pub escrow_payment_account : Account<'info,TokenAccount>,

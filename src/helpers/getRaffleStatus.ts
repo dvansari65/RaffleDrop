@@ -1,4 +1,4 @@
-import { RaffleStatus } from "@/types/raffle";
+import { RaffleStatus } from "@/types/raffleType";
 
 
 export const getRaffleStatus = (status: any): RaffleStatus => {

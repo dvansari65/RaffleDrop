@@ -11,11 +11,12 @@ pub struct RaffleCreated {
 }
 
 #[event]
-#[derive(Debug)]
 pub struct TicketsBought {
-   pub buyer:Pubkey,
-   pub raffle:Pubkey,
-   pub number_of_tickets_bought:u8
+    pub buyer: Pubkey,
+    pub raffle: Pubkey,
+    pub number_of_tickets_bought: u8,
+    pub total_tickets_now: u64,
+    pub total_participants_now: u32,
 }
 
 #[event]

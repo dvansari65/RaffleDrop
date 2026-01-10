@@ -1,20 +1,21 @@
 import { PublicKey } from '@solana/web3.js'
+import { BN } from 'bn.js';
 
 interface GetRafflePdaProps {
- counterPda:PublicKey,
+  counterValue:number,
   programId: PublicKey
 }
 
 
 export const getRafflePda = ({
-  counterPda,
+  counterValue,
   programId
 }: GetRafflePdaProps) => {
   
   const [pda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("raffle"),
-      counterPda.toBuffer()
+      new BN(counterValue).toBuffer()
     ],
     programId
   )
@@ -32,11 +33,4 @@ export const getEscrowPda = (raffleKey: PublicKey, programId: PublicKey) => {
   )
   
   return pda;
-}
-export const getCounterPda = (programId:PublicKey)=>{
-  const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("global-counter")],
-    programId
-  )
-  return pda
 }

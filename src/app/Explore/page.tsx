@@ -5,62 +5,112 @@ import { Ticket, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
 import ExploreHeading from '@/components/Explore/exploring-heading';
 import { useRaffleAccount } from '@/hooks/useGetRaffleInfo';
-import {RaffleCard} from '@/components/raffle/raffle-card';
-import { getRaffleStatus } from '@/helpers/getRaffleStatus';
+import { RaffleCard } from '@/components/raffle/raffle-card';
 import { RaffleCardLoaderGrid } from '@/components/raffle/loader';
 import BuyTicketModal from '@/components/modal/buy-ticket-modal';
 import { buyTicket } from '@/api/buyTicket';
-import { buyTicketProps } from '@/types/raffle';
+import { buyTicketProps } from '@/types/raffleType';
 import { toast } from 'sonner';
-import {PublicKey} from "@solana/web3.js"
+import { PublicKey } from "@solana/web3.js"
 import { resolveIpfs } from '@/helpers/resolveIPFS';
 import { SMALLEST_TOKEN_UNIT } from '@/constants/smallest-token-unit';
+import { getRaffleStatus } from '@/helpers/getRaffleStatus';
+import { CounterInitModal } from '@/components/modal/initialise-counter';
+import { initialiseCounter } from '@/api/initialise-counter';
+import { checkCounterInfo } from '@/utils/getAccountInfo';
+import { useRaffleProgram } from '@/hooks/useRaffleProgram';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState('active');
   const { data, isLoading } = useRaffleAccount();
   const [numberOfTickets, setNumberOfTickets] = useState<number | null>(null);
   const [ticketPrice, setTicketPrice] = useState<number | null>(null)
-  const [raffleKey,setRaffleKey] = useState("")
+  const [sellerKey, setSellerKey] = useState("")
+  const [raffleKey, setRaffleKey] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCheckCounterInit,setIsCheckCounterInit] = useState(false)
   const [error, setError] = useState("")
   const { mutate, isPending: buyTicketLoading, error: ticketError } = buyTicket()
-
+  const [counterInitModal, setCounterInitModal] = useState(false)
+  const { mutate: counterInit, isPending: counterInitLoading } = initialiseCounter()
+  const {program} = useRaffleProgram()
+  const {connection} = useConnection()
   const handleBuyTicket = () => {
-    console.log("hiting....")
-   
-    const payload:buyTicketProps = {
-      numTickets:numberOfTickets ?? 0,
-      rafflePubKey:new PublicKey(raffleKey),
+    const convertedSellerKey = new PublicKey(sellerKey)
+    const payload: buyTicketProps = {
+      numTickets: numberOfTickets ?? 0,
+      sellerKey: convertedSellerKey,
+      raffleKey: new PublicKey(raffleKey),
     }
-    mutate(payload,{
-      onSuccess:(tx)=>{
-        if(tx){
+    mutate(payload, {
+      onSuccess: (tx) => {
+        if (tx) {
           toast.success("Ticket bought successfully!")
           setIsModalOpen(false)
         }
       },
-      onError:(error)=>{
-       console.log("error:",error.message)
+      onError: (error) => {
+        if (error.message.includes('0xbc4') ||
+          error.message.includes('AccountNotInitialized') ||
+          error.message.includes('Error Number: 3012')) {
+
+          setCounterInitModal(true); // Show the modal
+          toast.error("Counter needs to be initialized first");
+        } else {
+          toast.error(error.message);
+        }
+        console.log("error:", error.message)
       }
     })
   }
 
-  const handleOpenModal = ({ 
-    maxTickets, 
-    ticketPrice, 
+  const handleCounterInit = async() => {
+    setIsCheckCounterInit(true)
+
+    try {
+      const isCounterExist = await checkCounterInfo(program,connection)
+      if(isCounterExist){
+        toast.success("Counter already exist!")
+        setCounterInitModal(false)
+        return;
+      }
+      counterInit(undefined, {
+        onSuccess: (tx) => {
+          if (tx) {
+            toast.success("Counter initialise successfully!")
+          }
+        },
+        onError: (error) => {
+          
+          console.log("error:", error)
+          toast.error(error.message)
+        }
+      })
+    } catch (error) {
+      
+    }
+  }
+
+
+  const handleOpenModal = ({
+    maxTickets,
+    ticketPrice,
     raffleKey,
-   }: { 
-    maxTickets: number | null, 
-    ticketPrice: number | null, 
-    raffleKey:string,
-    }) => {
+    sellerKey
+  }: {
+    maxTickets: number | null,
+    ticketPrice: number | null,
+    raffleKey: string,
+    sellerKey: string
+  }) => {
     setError("")
-    
+
     if (!maxTickets) {
       setError("Max tickets not found!")
       return;
     }
+    setSellerKey(sellerKey)
     setRaffleKey(raffleKey)
     setNumberOfTickets(maxTickets);
     setTicketPrice(ticketPrice)
@@ -69,7 +119,7 @@ export default function ExplorePage() {
   if (isLoading) {
     return <RaffleCardLoaderGrid />;
   }
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Atmospheric Effects */}
@@ -227,8 +277,8 @@ export default function ExplorePage() {
                       key={raffle.publicKey.toString()}
                       itemName={raffle.account.itemName.toString()}
                       itemDescription={raffle?.account.itemDescription}
-                      sellingPrice={Number(raffle?.account?.sellingPrice)/SMALLEST_TOKEN_UNIT}
-                      ticketPrice={Number(raffle?.account?.ticketPrice)/SMALLEST_TOKEN_UNIT}
+                      sellingPrice={Number(raffle?.account?.sellingPrice) / SMALLEST_TOKEN_UNIT}
+                      ticketPrice={Number(raffle?.account?.ticketPrice) / SMALLEST_TOKEN_UNIT}
                       totalCollected={Number(raffle?.account?.totalCollected)}
                       maxTickets={raffle.account?.maxTickets}
                       deadline={raffle.account.deadline.toNumber()}
@@ -236,11 +286,12 @@ export default function ExplorePage() {
                       sellerKey={raffle.account.seller.toString()}
                       itemImage={resolveIpfs(raffle.account.itemImageUri)}
                       raffleKey={raffle.publicKey.toString()}
-                      onBuyTicket={() => handleOpenModal({ 
-                        maxTickets: raffle.account.maxTickets, 
+                      onBuyTicket={() => handleOpenModal({
+                        maxTickets: raffle.account.maxTickets,
                         ticketPrice: Number(raffle.account.ticketPrice),
-                        raffleKey:raffle.publicKey.toString(),
-                       })}
+                        raffleKey: raffle.publicKey.toString(),
+                        sellerKey: raffle?.account?.seller.toString()
+                      })}
                     />
                   ))}
                 </div>
@@ -261,7 +312,15 @@ export default function ExplorePage() {
           buyTicketError={error || ticketError?.message || ""}
         />
       }
-
+      {
+        counterInitModal &&
+        <CounterInitModal
+          isOpen={counterInitModal}
+          onClose={() => setCounterInitModal(false)}
+          onProceed={handleCounterInit}
+          isPending={counterInitLoading}
+        />
+      }
       {/* Bottom atmospheric effect */}
       <div className="fixed bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-30"></div>
     </div>
