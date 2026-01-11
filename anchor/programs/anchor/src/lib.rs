@@ -35,16 +35,7 @@ pub mod Raffle {
         let clock = Clock::get()?;
         let counter = &mut ctx.accounts.counter;
 
-        if counter.counter == 0 {
-            // You might want to add more validation here
-            counter.counter = 1; // Start from 1
-        } else {
-            counter.counter = counter
-                .counter
-                .checked_add(1)
-                .ok_or(RaffleError::Overflow)?;
-        }
-        let raffle_id = &mut ctx.accounts.counter.counter;
+        let raffle_id = counter.counter;
         // Token decimals constant
         const DECIMALS: u64 = 1_000_000; // 10^6 for 6 decimals
         
@@ -84,7 +75,12 @@ pub mod Raffle {
         raffle.escrow_bump = ctx.bumps.escrow_payment_account;
         raffle.is_sold_out = false;
         raffle.total_entries = 0;
-        raffle.raffle_id = *raffle_id;
+        raffle.raffle_id = raffle_id;
+        counter.counter = counter
+                        .counter
+                        .checked_add(1)
+                        .ok_or(RaffleError::Overflow)?;
+
         emit!(RaffleCreated {
             raffle: raffle.key(),
             seller: raffle.seller,
@@ -305,7 +301,7 @@ pub struct CreateRaffle<'info> {
     #[account(
         init,
         payer = seller,
-        seeds = [b"escrow_payment",seller.key().as_ref(),],
+        seeds = [b"escrow_payment",seller.key().as_ref(), &counter.counter.to_le_bytes()],
         bump,
         token::mint = payment_mint,
         token::authority = raffle_account,
@@ -343,7 +339,7 @@ pub struct  BuyTickets<'info> {
 
     #[account(
         mut,
-        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&counter.counter.to_le_bytes()],
+        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&raffle_account.raffle_id.to_be_bytes()],
         bump
     )]
     pub escrow_payment_account : Account<'info,token::TokenAccount>,
@@ -381,7 +377,7 @@ pub struct DrawWinner<'info>{
     pub winner_token_account:Account<'info,token::TokenAccount>,
     #[account(
         mut,
-        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&counter.counter.to_le_bytes()],
+        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&raffle_account.raffle_id.to_be_bytes()],
         bump
     )]
     pub escrow_payment_account : Account<'info,TokenAccount>,
