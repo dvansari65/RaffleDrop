@@ -3,25 +3,26 @@ import { ChangeEvent, useState } from "react";
 
 interface BuyTicketModalProps {
     maxTickets: number | null,
+    ticketCount: number | null,
+    onTicketCountChange: (count: number | null) => void,
     ticketPrice: number | null,
     onClose: () => void,
-    onBuyTickets: () => void,
+    onBuyTickets: (ticketCount: number | null) => void,
     isLoading: boolean,
     isOpen: boolean,
     buyTicketError: string
 }
 
-function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoading, isOpen, buyTicketError }: BuyTicketModalProps) {
-    const [ticketCount, setTicketCount] = useState<number | null>(null);
+function BuyTicketModal({ maxTickets, ticketCount, ticketPrice, onTicketCountChange, onClose, onBuyTickets, isLoading, isOpen, buyTicketError }: BuyTicketModalProps) {
+
     const [error, setError] = useState("");
 
     if (!isOpen) return null;
 
     const handleTicketChange = (e: ChangeEvent<HTMLInputElement>) => {
-
         const value = e.target.value;
         if (!value) {
-            setTicketCount(null);
+            onTicketCountChange(null);  // CHANGED
             setError("");
             return;
         }
@@ -36,16 +37,16 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
         } else {
             setError("");
         }
-        setTicketCount(num);
+        onTicketCountChange(num);  // CHANGED
     };
 
     const handleBuy = async () => {
-        onBuyTickets()
+        onBuyTickets(ticketCount)
     };
 
     if (!ticketPrice) return
 
-    const totalCost = ticketCount ? (Number(ticketCount) * (ticketPrice)/SMALLEST_TOKEN_UNIT).toFixed(2) : "0.00";
+    const totalCost = ticketCount ? (Number(ticketCount) * (ticketPrice) / SMALLEST_TOKEN_UNIT).toFixed(2) : "0.00";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -89,9 +90,9 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-lg opacity-0 group-focus-within:opacity-30 blur transition duration-300"></div>
                                 <input
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     max={maxTickets || 0}
-                                    value={String(ticketCount)}
+                                    value={ticketCount ?? ""}
                                     onChange={handleTicketChange}
                                     className="relative w-full bg-slate-800/50 border border-red-800/50 rounded-lg py-3 px-4 text-white font-mono text-lg focus:outline-none focus:border-red-500/50 transition-colors"
                                     placeholder="Enter number"
@@ -124,7 +125,7 @@ function BuyTicketModal({ maxTickets, ticketPrice, onClose, onBuyTickets, isLoad
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-sm text-slate-400 font-mono">Ticket Price</p>
-                                    <p className="text-lg font-bold text-amber-400">{ticketPrice/SMALLEST_TOKEN_UNIT} SOL</p>
+                                    <p className="text-lg font-bold text-amber-400">{ticketPrice / SMALLEST_TOKEN_UNIT} SOL</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-slate-400 font-mono">Total Cost</p>
