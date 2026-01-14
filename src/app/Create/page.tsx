@@ -3,14 +3,13 @@ import { CreateRaffle } from '@/api/createRaffle';
 import { initialiseCounter } from '@/api/initialise-counter';
 import { CounterInitModal } from '@/components/modal/initialise-counter';
 import { deadlineTimestamp } from '@/helpers/deadlineTimestamp';
-import { useGetCounterPda } from '@/hooks/useGetCounterPda';
 import { CreateRaffleInputs } from '@/types/raffleType';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Clock, DollarSign, ImageIcon, Shield, Sparkles, Ticket, TrendingUp, Users, Zap } from 'lucide-react';
+import { ArrowRight, Clock, DollarSign, ImageIcon, Ticket, Users, Zap } from 'lucide-react';
 import React, { useState } from 'react'
 import { toast } from 'sonner';
 
-function page() {
+function Page() {
   const [itemName, setItemName] = useState("")
   const [itemDescription, setItemDescription] = useState("")
   const [image, setImage] = useState<File | null>(null)
@@ -22,10 +21,10 @@ function page() {
   const [maxTickets, setMaxTickets] = useState<number | null>(null)
   const [counterInitModal, setCounterInitModal] = useState(false)
   
-  // existing counter key from .env file
   const { mutate, isPending } = CreateRaffle()
   const queryClient = useQueryClient()
   const { mutate: counterInit, isPending: counterInitLoading } = initialiseCounter()
+  
   const isFormValid = () => {
     return itemName &&
       itemDescription &&
@@ -62,20 +61,17 @@ function page() {
         if (error.message.includes('0xbc4') ||
           error.message.includes('AccountNotInitialized') ||
           error.message.includes('Error Number: 3012')) {
-
-          setCounterInitModal(true); // Show the modal
+          setCounterInitModal(true);
           toast.error("Counter needs to be initialized first");
         } else {
           toast.error(error.message);
         }
         console.log("error from page:", error.message)
-        toast.error(error.message)
       }
     })
   }
 
   const handleCounterInit = () => {
-
     counterInit(undefined, {
       onSuccess: (tx) => {
         if (tx) {
@@ -91,7 +87,6 @@ function page() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      {/* Flickering background effects */}
       <div className="fixed top-0 left-0 w-96 h-96 bg-red-900/10 rounded-full blur-3xl animate-pulse"></div>
       <div className="fixed bottom-0 right-0 w-96 h-96 bg-amber-900/10 rounded-full blur-3xl animate-pulse"></div>
 
@@ -135,7 +130,6 @@ function page() {
 
       <section className="px-6 pb-24 relative">
         <div className="container mx-auto max-w-4xl">
-          {/* Glowing border effect */}
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600/20 via-amber-600/20 to-red-600/20 rounded-2xl blur-xl"></div>
 
@@ -243,8 +237,8 @@ function page() {
                       </label>
                       <input
                         type="number"
-                        value={sellingPrice || ""}
-                        onChange={(e) => setSellingPrice(Number(e.target.value))}
+                        value={sellingPrice ?? ""}
+                        onChange={(e) => setSellingPrice(e.target.value === "" ? null : Number(e.target.value))}
                         placeholder="599"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all font-mono"
                         required
@@ -258,8 +252,8 @@ function page() {
                       </label>
                       <input
                         type="number"
-                        value={ticketPrice || ""}
-                        onChange={(e) => setTicketPrice(Number(e.target.value))}
+                        value={ticketPrice ?? ""}
+                        onChange={(e) => setTicketPrice(e.target.value === "" ? null : Number(e.target.value))}
                         placeholder="5"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all font-mono"
                         required
@@ -290,7 +284,7 @@ function page() {
                       <input
                         type="number"
                         value={minTickets}
-                        onChange={(e) => setMinTickets(Number(e.target.value))}
+                        onChange={(e) => setMinTickets(e.target.value === "" ? 1 : Number(e.target.value))}
                         placeholder="10"
                         min="1"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-mono"
@@ -305,8 +299,8 @@ function page() {
                       </label>
                       <input
                         type="number"
-                        value={maxTickets || ""}
-                        onChange={(e) => setMaxTickets(Number(e.target.value))}
+                        value={maxTickets ?? ""}
+                        onChange={(e) => setMaxTickets(e.target.value === "" ? null : Number(e.target.value))}
                         placeholder="100"
                         min="1"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-mono"
@@ -397,4 +391,4 @@ function page() {
   )
 }
 
-export default page
+export default Page
