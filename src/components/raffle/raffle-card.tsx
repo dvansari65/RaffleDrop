@@ -16,7 +16,7 @@ interface RaffleCardProps {
     totalCollected: number;
     maxTickets: number;
     deadline: number;
-    status: "active" | "drawing" | "completed" | "cancelled" | "refunded";
+    status: "active" | "drawing" | "completed" | "cancelled" | "refunded" | "ended";
     sellerKey: string;
     raffleKey: string;
     entries: number;

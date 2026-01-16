@@ -1,4 +1,5 @@
-import {PublicKey} from "@solana/web3.js"
+import { Idl, Program } from "@coral-xyz/anchor";
+import {Connection, PublicKey} from "@solana/web3.js"
 export interface CreateRaffleInputs {
     itemName: string,
     itemDescription: string,
@@ -10,13 +11,14 @@ export interface CreateRaffleInputs {
     deadline: number,
 }
 
-export type RaffleStatus = "active" | "drawing" | "completed" | "cancelled" | "refunded";
+export type RaffleStatus = "active" | "drawing" | "completed" | "cancelled" | "refunded" | "ended";
 
 
 export interface buyTicketProps {
     numTickets:number,
     sellerKey: PublicKey; 
-    raffleKey:PublicKey
+    raffleKey:PublicKey;
+    raffleId:number | null
 }
 
 export type RaffleUIState =
@@ -27,3 +29,8 @@ export type RaffleUIState =
 | "cancelled"
 | "refunded"
 | "expired"
+
+export interface createRandomAccountDataProps {
+    program:Program<Idl>,
+    connection:Connection
+}

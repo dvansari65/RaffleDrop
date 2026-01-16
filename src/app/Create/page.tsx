@@ -284,7 +284,7 @@ function Page() {
                       <input
                         type="number"
                         value={minTickets}
-                        onChange={(e) => setMinTickets(e.target.value === "" ? 1 : Number(e.target.value))}
+                        onChange={(e) => setMinTickets(e.target.value === "" ? 0 : Number(e.target.value))}
                         placeholder="10"
                         min="1"
                         className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all font-mono"

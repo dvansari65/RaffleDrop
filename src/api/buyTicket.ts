@@ -3,12 +3,12 @@ import { useCreateAssociatedToken } from "@/hooks/useCreateATA"
 import { useGetCounterPda } from "@/hooks/useGetCounterPda"
 import { useRaffleProgram } from "@/hooks/useRaffleProgram"
 import { buyTicketProps } from "@/types/raffleType"
-import { AnchorError } from "@coral-xyz/anchor"
+import { AnchorError, BN } from "@coral-xyz/anchor"
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 import { PublicKey, SystemProgram } from "@solana/web3.js"
 import { useMutation } from "@tanstack/react-query"
-import { toast } from "sonner"
+
 
 export const buyTicket = () => {
     const { program } = useRaffleProgram()
@@ -17,17 +17,10 @@ export const buyTicket = () => {
     const { createTokenAccount } = useCreateAssociatedToken()
     return useMutation<any, Error, buyTicketProps>({
         mutationKey: ["buy-ticket"],
-        mutationFn: async ({ numTickets, sellerKey,raffleKey }: buyTicketProps) => {
+        mutationFn: async ({ numTickets, sellerKey,raffleKey,raffleId }: buyTicketProps) => {
             try {
                 let tokenATA: PublicKey;
               
-                const [counterKey] = PublicKey.findProgramAddressSync(
-                    [
-                        Buffer.from("gobal-counter")
-                    ],
-                    program.programId
-                )
-                console.log("counter key:",counterKey)
                 try {
                     tokenATA = await createTokenAccount()
                 } catch (error) {
@@ -42,18 +35,18 @@ export const buyTicket = () => {
                     throw new Error("Program id not found!")
                 }
 
-                if (!counterKey) {
-                    throw new Error("Counter pda not found!")
-                }
                 if (!sellerKey) {
                     throw new Error("Seller key not found!")
                 }
-
+                if(!raffleId){
+                    throw new Error("Raffle id not found!")
+                }
+                console.log("raffle id:",raffleId)
                 const [escrowPaymentAccount] = PublicKey.findProgramAddressSync(
                     [
                         Buffer.from("escrow_payment"),
                         sellerKey.toBuffer(),
-                        counterKey.toBuffer()
+                        new BN(raffleId).toArrayLike(Buffer,"le",8)
                     ],
                     program.programId
                 )
@@ -64,7 +57,6 @@ export const buyTicket = () => {
                         buyer: publicKey,
                         buyerTokenAccont: tokenATA,
                         raffleAccount: raffleKey,
-                        counter: counterKey,
                         escrowPaymentAccount,
                         tokenProgram: TOKEN_PROGRAM_ID,
                         systemProgram: SystemProgram.programId,
@@ -87,14 +79,14 @@ export const buyTicket = () => {
                 // 3️⃣ Send RAW transaction (full control)
                 const signature = await connection.sendRawTransaction(
                     signedTx.serialize(),
-                    { maxRetries: 0 }
+                    { maxRetries: 3 }
                 )
                 const currentHeight = await connection.getBlockHeight()
                 if(currentHeight > lastValidBlockHeight ){
                     console.log("Blockhash expired!!!!!!")
                 }
                 // 4️⃣ Confirm with SAME blockhash
-                await connection.confirmTransaction(
+                const confirmation = await connection.confirmTransaction(
                     {
                         signature,
                         blockhash,
@@ -102,7 +94,13 @@ export const buyTicket = () => {
                     },
                     "confirmed"
                 )
-
+                if (confirmation.value.err) {
+                    throw new Error(`Transaction failed: ${confirmation.value.err}`)
+                }
+                
+                // 6️⃣ Add a small delay to ensure state is updated
+                await new Promise(resolve => setTimeout(resolve, 3000))
+                
                 return signature
 
             } catch (error:any) {

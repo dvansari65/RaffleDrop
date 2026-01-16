@@ -58,4 +58,5 @@ pub enum RaffleStatus {
     Completed,
     Cancelled,
     Refunded,
+    Ended
 }

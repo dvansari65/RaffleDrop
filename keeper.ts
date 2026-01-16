@@ -1,15 +1,22 @@
-import { Connection, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import * as anchor from '@coral-xyz/anchor';
-import cron from 'node-cron';
 import { sleep } from '@switchboard-xyz/common';
-import * as dotenv from "dotenv";
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createServer } from "http"
+import { Server } from "socket.io"
+import * as dotenv from "dotenv"
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { withRetry } from '@/helpers/withRetry';
+import cron from "node-cron"
+import * as sb from "@switchboard-xyz/on-demand";
 
 
+dotenv.config()
+
+const keyPair = Keypair.generate();
 // Handle __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,14 +27,10 @@ const idl = JSON.parse(
 );
 
 dotenv.config();
-console.log("Keeper started.....");
 
 // Configuration
 const RPC_ENDPOINT = process.env.RPC_URL || 'http://127.0.0.1:8899';
 const PROGRAM_ID = new PublicKey('5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz');
-
-// Switchboard OnDemand feed (devnet example)
-const SWITCHBOARD_FEED = new PublicKey('GvDMxPzN1sCj7L26YDK2HnMRXEQmQ2aemov8YBtPS7vR');
 
 // Initialize connection
 const connection = new Connection(RPC_ENDPOINT, 'confirmed');
@@ -39,32 +42,30 @@ const walletKeypair = anchor.web3.Keypair.fromSecretKey(
   )
 );
 
-const wallet = new Wallet(walletKeypair);
-console.log("Wallet loaded:", wallet.publicKey.toString());
+const myWallet = new Wallet(walletKeypair);
 
 // Create provider
-const provider = new AnchorProvider(connection, wallet, {
+const provider = new AnchorProvider(connection, myWallet, {
   commitment: 'confirmed',
 });
 
 // Initialize program
-const program = new Program(idl as any, provider);
+const myProgram = new Program(idl as any, provider);
 
 // Keeper function to draw winner for a specific raffle
 async function drawWinnerForRaffle(
-  rafflePda:PublicKey,
+  rafflePda: PublicKey,
   counter: number,
   seller: PublicKey,
   paymentMint: PublicKey
 ) {
- 
+  console.clear();
   try {
     // Get current time
     const currentTime = Math.floor(Date.now() / 1000);
 
     // Fetch raffle account
-    const raffleAccount = await (program.account as any).raffleAccount.fetch(rafflePda);
-
+    const raffleAccount = await (myProgram.account as any).raffleAccount.fetch(rafflePda);
     // Check conditions
     if (
       !raffleAccount.claimed &&
@@ -72,13 +73,11 @@ async function drawWinnerForRaffle(
       raffleAccount.participants.length > 0 &&
       currentTime > raffleAccount.deadline.toNumber()
     ) {
-
       console.log(`- Counter: ${counter}`);
       console.log(`- Seller: ${seller.toString()}`);
       console.log(`- Payment Mint: ${paymentMint.toString()}`);
-
-      // Find counter PDA
-      const [counterPDA] = PublicKey.findProgramAddressSync(
+       // Find counter PDA
+       const [counterPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from('global-counter')],
         PROGRAM_ID
       );
@@ -92,38 +91,91 @@ async function drawWinnerForRaffle(
         ],
         PROGRAM_ID
       );
-
-      console.log(`- Counter PDA: ${counterPDA.toString()}`);
-      console.log(`- Escrow PDA: ${escrowPDA.toString()}`);
-      console.log("keeper address:",wallet.payer.publicKey.toString())
-      // Create transaction
-      const tx = await program.methods
-        .drawWinner()
-        .accounts({
-          randomnessAccountData: SWITCHBOARD_FEED,
-          raffleAccount: rafflePda,
-          counter: counterPDA,
-          escrowPaymentAccount: escrowPDA,
-          keeper: wallet.payer.publicKey,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId
-        })
-        .transaction();
-
-      // Send transaction
-      const signature = await sendAndConfirmTransaction(
+      const {wallet} = await  sb.AnchorUtils.loadEnv()
+      if(!connection){
+        return;
+      }
+      //load sb program
+      const sbProgram = await sb.AnchorUtils.loadProgramFromConnection(
         connection,
-        tx,
-        [wallet.payer],
-        {
-          commitment: 'confirmed',
-          skipPreflight: false,
-        }
+        myWallet,
+        PROGRAM_ID
       );
 
-      console.log(`✅ Success! Transaction signature: ${signature}`);
+      if(!sbProgram || !myProgram){
+        throw new Error("Sb program or myProgram not found!")
+      }
+      // getting queue account
+      const queue = await sb.getDefaultQueue(connection.rpcEndpoint)
+      console.log("queue:",queue)
+       // Generate randomness keypair
+      const randomnessKeypair = Keypair.generate();
+      
+      //creating randomness account and getting its transaction
+      const [randomness, createIx] = await sb.Randomness.create(sbProgram,randomnessKeypair,queue.pubkey)
 
-      return signature;
+      if (!randomness || !createIx) {
+        throw new Error("Random account data not found!")
+      }
+      //send creation transaction
+      const createTx = await sb.asV0Tx({
+        connection,
+        ixs: [createIx],
+        payer: walletKeypair.publicKey,
+        signers:[walletKeypair,randomnessKeypair],
+        computeUnitPrice: 75_000,
+        computeUnitLimitMultiple: 1.3,
+      })
+      //sending create transaction
+      const createSig =  await connection.sendTransaction(createTx)
+      await connection.confirmTransaction(createSig, "confirmed");
+      // Wait a bit for account to be ready
+      await sleep(2000);
+      //creating the commit transaction
+      const commitIx = await randomness.commitIx(queue.pubkey,randomnessKeypair.publicKey)
+      
+      // calling the draw instruction
+      const tx = await myProgram.methods
+      .drawWinner()
+      .accounts({
+        randomnessAccountData: randomnessKeypair.publicKey,
+        raffleAccount: rafflePda,
+        counter: counterPDA,
+        escrowPaymentAccount: escrowPDA,
+        keeper: walletKeypair.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+      })
+      .instruction();
+
+      // bundle commitIx and draw winner 
+      const commitTx = await sb.asV0Tx({
+        connection,
+        ixs:[commitIx,tx],
+        payer:walletKeypair.publicKey,
+        signers:[walletKeypair,randomnessKeypair],
+        computeUnitPrice: 75_000,
+        computeUnitLimitMultiple: 1.3,
+      })
+
+      // send transaction and added retry logic
+      const commitSig = await withRetry(
+        async ()=>{
+          return await connection.sendTransaction(commitTx)
+        },
+        {retries:3}
+      )
+      // confirm transaction
+      await connection.confirmTransaction(
+        commitSig,
+        "confirmed"
+      )
+      
+      console.log("Committed! Transaction:", commitSig);
+      console.log(`- Counter PDA: ${counterPDA.toString()}`);
+      console.log(`- Escrow PDA: ${escrowPDA.toString()}`);
+      console.log("keeper address:", wallet.payer.publicKey.toString())
+      return commitSig;
     } else {
       console.log(`⏳ Raffle ${rafflePda.toString()} not ready for drawing:`);
       console.log(`   - Claimed: ${raffleAccount.claimed}`);
@@ -144,13 +196,14 @@ async function drawWinnerForRaffle(
   }
 }
 
-// Main keeper function to scan all raffles
+// // Main keeper function to scan all raffles
 async function scanAndDrawWinners() {
   try {
     console.log(`\n[${new Date().toISOString()}] 🔍 Scanning for raffles...`);
 
+    let results: any[] = [];
     // Fetch all raffle accounts
-    const allRaffles = await (program.account as any).raffleAccount.all();
+    const allRaffles = await (myProgram.account as any).raffleAccount.all();
 
     console.log(`Found ${allRaffles.length} total raffles`);
 
@@ -161,8 +214,8 @@ async function scanAndDrawWinners() {
 
     for (const raffle of allRaffles) {
       const raffleData = raffle.account;
-      console.log("current time:",currentTime)
-      console.log("deadline:",raffleData.deadline.toNumber())
+      console.log("current time:", currentTime)
+      console.log("deadline:", raffleData.deadline.toNumber())
       if (
         raffleData.status.active &&
         !raffleData.claimed &&
@@ -171,9 +224,10 @@ async function scanAndDrawWinners() {
       ) {
         eligibleCount++;
         console.log(`\n📋 Processing eligible raffle ${eligibleCount}: ${raffle.publicKey.toString()}`);
-        console.log("counter:",raffleData.raffleId?.toNumber())
-        console.log("seller:",raffleData.seller.toString())
-        console.log("raffle key:",raffle.publicKey?.toString())
+        console.log("counter:", raffleData.raffleId?.toNumber())
+        console.log("seller:", raffleData.seller.toString())
+        console.log("raffle key:", raffle.publicKey?.toString())
+        
         const result = await drawWinnerForRaffle(
           raffle.publicKey,
           raffleData.raffleId?.toNumber() || 0,
@@ -183,8 +237,13 @@ async function scanAndDrawWinners() {
 
         if (result) {
           processedCount++;
+          results.push({
+            winnerPubkey: raffleData.winner?.toString(),
+            claimed: raffleData.claimed,
+            raffleKey: raffle.publicKey.toString(),
+            signature: result
+          });
         }
-
         // Small delay to avoid rate limiting
         await sleep(2000);
       }
@@ -194,45 +253,54 @@ async function scanAndDrawWinners() {
     console.log(`   - Total raffles: ${allRaffles.length}`);
     console.log(`   - Eligible raffles: ${eligibleCount}`);
     console.log(`   - Successfully processed: ${processedCount}`);
+    return results;
   } catch (error) {
     console.error('❌ Error scanning raffles:', error);
     if (error instanceof Error) {
       console.error(`   Error message: ${error.message}`);
     }
+    throw error
   }
 }
 
-// Run keeper every 5 minutes
-cron.schedule('*/5 * * * *', async () => {
-  console.log('\n⏰ Running scheduled raffle keeper check...');
-  await scanAndDrawWinners();
-});
+const server = createServer()
+const io = new Server(server, {
+  cors: {
+    methods: ["POST", "GET"],
+    origin: "*"
+  }
+})
 
-// Main function
-async function main() {
-  console.log('🚀 Starting raffle keeper...');
-  console.log(`   - RPC Endpoint: ${RPC_ENDPOINT}`);
-  console.log(`   - Program ID: ${PROGRAM_ID.toString()}`);
-  console.log(`   - Wallet: ${wallet.publicKey.toString()}`);
-  console.log(`   - Switchboard Feed: ${SWITCHBOARD_FEED.toString()}`);
-
-  // Initial scan
-  await scanAndDrawWinners();
-
-  console.log('\n⏰ Cron job scheduled: every 5 minutes');
-  console.log('🔄 Keeper is now running...\n');
-
-  // Keep process alive
-  setInterval(() => {
-    // Keep-alive ping
-    console.log(`[${new Date().toISOString()}] 💓 Keeper alive`);
-  }, 1000 * 60 * 30); // Every 30 minutes
+async function KeeperLoop() {
+  try {
+    const results = await scanAndDrawWinners()
+    if (results && results?.length > 0) {
+      io.emit("winner-selected", results)
+    }
+  } catch (error) {
+    throw error;
+  }
 }
+cron.schedule('* * * * *', async () => {
+  console.log(`⏰ Cron triggered at ${new Date().toISOString()}`);
+  console.log('⏳ Waiting 30 seconds before running keeper...');
 
-// Start the keeper
-main().catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
+  // Wait 30 seconds
+
+  console.log('▶️ 30 seconds passed, running keeper now...');
+  await KeeperLoop();
 });
 
-export { scanAndDrawWinners, drawWinnerForRaffle };
+io.on("connect", async (socket) => {
+  console.log("socket connected:", socket.id)
+  await KeeperLoop()
+  socket.on("disconnect", () => {
+    console.log("socket disconnected!")
+  })
+})
+
+const PORT = process.env.PORT || 3001
+
+server.listen(PORT, () => {
+  console.log(`Socket server is running on ${PORT}`)
+})

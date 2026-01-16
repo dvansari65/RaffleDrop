@@ -40,33 +40,6 @@ export type Raffle = {
           "writable": true
         },
         {
-          "name": "counter",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "escrowPaymentAccount",
           "writable": true,
           "pda": {
@@ -97,8 +70,8 @@ export type Raffle = {
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "counter"
+                "path": "raffle_account.raffle_id",
+                "account": "raffleAccount"
               }
             ]
           }
@@ -332,15 +305,7 @@ export type Raffle = {
                   102,
                   102,
                   108,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
+                  101
                 ]
               },
               {
@@ -350,8 +315,8 @@ export type Raffle = {
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "counter"
+                "path": "raffle_account.raffle_id",
+                "account": "raffleAccount"
               }
             ]
           }
@@ -384,10 +349,6 @@ export type Raffle = {
           }
         },
         {
-          "name": "winnerTokenAccount",
-          "writable": true
-        },
-        {
           "name": "escrowPaymentAccount",
           "writable": true,
           "pda": {
@@ -418,14 +379,14 @@ export type Raffle = {
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "counter"
+                "path": "raffle_account.raffle_id",
+                "account": "raffleAccount"
               }
             ]
           }
         },
         {
-          "name": "selller",
+          "name": "keeper",
           "writable": true,
           "signer": true
         },
@@ -965,6 +926,10 @@ export type Raffle = {
         "kind": "struct",
         "fields": [
           {
+            "name": "raffleId",
+            "type": "u64"
+          },
+          {
             "name": "seller",
             "type": "pubkey"
           },
@@ -1130,6 +1095,9 @@ export type Raffle = {
           },
           {
             "name": "refunded"
+          },
+          {
+            "name": "ended"
           }
         ]
       }

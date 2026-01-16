@@ -34,33 +34,6 @@
           "writable": true
         },
         {
-          "name": "counter",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "escrow_payment_account",
           "writable": true,
           "pda": {
@@ -91,8 +64,8 @@
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "Counter"
+                "path": "raffle_account.raffle_id",
+                "account": "RaffleAccount"
               }
             ]
           }
@@ -326,15 +299,7 @@
                   102,
                   102,
                   108,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
+                  101
                 ]
               },
               {
@@ -344,8 +309,8 @@
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "Counter"
+                "path": "raffle_account.raffle_id",
+                "account": "RaffleAccount"
               }
             ]
           }
@@ -378,10 +343,6 @@
           }
         },
         {
-          "name": "winner_token_account",
-          "writable": true
-        },
-        {
           "name": "escrow_payment_account",
           "writable": true,
           "pda": {
@@ -412,14 +373,14 @@
               },
               {
                 "kind": "account",
-                "path": "counter.counter",
-                "account": "Counter"
+                "path": "raffle_account.raffle_id",
+                "account": "RaffleAccount"
               }
             ]
           }
         },
         {
-          "name": "selller",
+          "name": "keeper",
           "writable": true,
           "signer": true
         },
@@ -959,6 +920,10 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "raffle_id",
+            "type": "u64"
+          },
+          {
             "name": "seller",
             "type": "pubkey"
           },
@@ -1124,6 +1089,9 @@
           },
           {
             "name": "Refunded"
+          },
+          {
+            "name": "Ended"
           }
         ]
       }

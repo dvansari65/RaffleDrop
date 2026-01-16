@@ -12,7 +12,7 @@
 
 # testing
 /coverage
-
+/keeper-wallet.json
 # next.js
 /.next/
 /out/

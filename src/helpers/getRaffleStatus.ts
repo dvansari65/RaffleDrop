@@ -7,5 +7,6 @@ export const getRaffleStatus = (status: any): RaffleStatus => {
     if (status.completed) return "completed";
     if (status.cancelled) return "cancelled";
     if (status.refunded) return "refunded";
+    if (status.ended) return "ended";
     throw new Error("Invalid raffle status");
   };

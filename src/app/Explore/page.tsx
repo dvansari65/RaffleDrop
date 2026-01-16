@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Ticket, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
@@ -20,14 +20,17 @@ import { initialiseCounter } from '@/api/initialise-counter';
 import { checkCounterInfo } from '@/utils/getAccountInfo';
 import { useRaffleProgram } from '@/hooks/useRaffleProgram';
 import { useConnection } from '@solana/wallet-adapter-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState('active');
   const { data, isLoading } = useRaffleAccount();
   const [numberOfTickets, setNumberOfTickets] = useState<number | null>(null);
+  const [maxTicketsLimit, setMaxTicketsLimit] = useState<number | null>(null);  // ADD THIS
   const [ticketPrice, setTicketPrice] = useState<number | null>(null)
   const [sellerKey, setSellerKey] = useState("")
   const [raffleKey, setRaffleKey] = useState("")
+  const [raffleId,setRaffleId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCheckCounterInit,setIsCheckCounterInit] = useState(false)
   const [error, setError] = useState("")
@@ -36,17 +39,20 @@ export default function ExplorePage() {
   const { mutate: counterInit, isPending: counterInitLoading } = initialiseCounter()
   const {program} = useRaffleProgram()
   const {connection} = useConnection()
+  const queryClient = useQueryClient()
   const handleBuyTicket = () => {
     const convertedSellerKey = new PublicKey(sellerKey)
     const payload: buyTicketProps = {
       numTickets: numberOfTickets ?? 0,
       sellerKey: convertedSellerKey,
       raffleKey: new PublicKey(raffleKey),
+      raffleId:raffleId
     }
     mutate(payload, {
       onSuccess: (tx) => {
         if (tx) {
           toast.success("Ticket bought successfully!")
+          queryClient.invalidateQueries({queryKey:["raffle-accounts"]})
           setIsModalOpen(false)
         }
       },
@@ -64,7 +70,6 @@ export default function ExplorePage() {
       }
     })
   }
-
   const handleCounterInit = async() => {
     setIsCheckCounterInit(true)
 
@@ -82,7 +87,7 @@ export default function ExplorePage() {
           }
         },
         onError: (error) => {
-          
+          setError(error.message)
           console.log("error:", error)
           toast.error(error.message)
         }
@@ -97,25 +102,28 @@ export default function ExplorePage() {
     maxTickets,
     ticketPrice,
     raffleKey,
-    sellerKey
-  }: {
+    sellerKey,
+    raffleId
+}: {
     maxTickets: number | null,
     ticketPrice: number | null,
     raffleKey: string,
-    sellerKey: string
-  }) => {
+    sellerKey: string,
+    raffleId: number
+}) => {
     setError("")
-
     if (!maxTickets) {
-      setError("Max tickets not found!")
-      return;
+        setError("Max tickets not found!")
+        return;
     }
+    setRaffleId(raffleId)
     setSellerKey(sellerKey)
     setRaffleKey(raffleKey)
-    setNumberOfTickets(maxTickets);
+    setMaxTicketsLimit(maxTickets);  // STORE MAX LIMIT
+    setNumberOfTickets(1);      // DEFAULT TO 1 TICKET
     setTicketPrice(ticketPrice)
     setIsModalOpen(true)
-  }
+}
   if (isLoading) {
     return <RaffleCardLoaderGrid />;
   }
@@ -271,28 +279,30 @@ export default function ExplorePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {data?.map((raffle) => (
                     <RaffleCard
-                      isSoldOut={raffle.account.isSoldOut}
-                      progress={Number(raffle?.account?.progress)}
-                      entries={String(raffle?.account.totalEntries)}
-                      key={raffle.publicKey.toString()}
-                      itemName={raffle.account.itemName.toString()}
-                      itemDescription={raffle?.account.itemDescription}
-                      sellingPrice={Number(raffle?.account?.sellingPrice) / SMALLEST_TOKEN_UNIT}
-                      ticketPrice={Number(raffle?.account?.ticketPrice) / SMALLEST_TOKEN_UNIT}
-                      totalCollected={Number(raffle?.account?.totalCollected)}
-                      maxTickets={raffle.account?.maxTickets}
-                      deadline={raffle.account.deadline.toNumber()}
-                      status={getRaffleStatus(raffle?.account?.status)}
-                      sellerKey={raffle.account.seller.toString()}
-                      itemImage={resolveIpfs(raffle.account.itemImageUri)}
-                      raffleKey={raffle.publicKey.toString()}
-                      onBuyTicket={() => handleOpenModal({
-                        maxTickets: raffle.account.maxTickets,
-                        ticketPrice: Number(raffle.account.ticketPrice),
-                        raffleKey: raffle.publicKey.toString(),
-                        sellerKey: raffle?.account?.seller.toString()
-                      })}
-                    />
+                    isSoldOut={raffle.account.isSoldOut}
+                    progress={(raffle?.account?.progress)}
+                    entries={(raffle?.account.totalEntries.toNumber())}
+                    key={raffle.publicKey.toString()}
+                    itemName={raffle.account.itemName.toString()}
+                    itemDescription={raffle?.account.itemDescription}
+                    sellingPrice={Number(raffle?.account?.sellingPrice) / SMALLEST_TOKEN_UNIT}
+                    ticketPrice={Number(raffle?.account?.ticketPrice) / SMALLEST_TOKEN_UNIT}
+                    totalCollected={Number(raffle?.account?.totalCollected)}
+                    maxTickets={raffle.account?.maxTickets}
+                    deadline={raffle.account.deadline.toNumber()}
+                    status={getRaffleStatus(raffle?.account?.status)}
+                    sellerKey={raffle.account.seller.toString()}
+                    itemImage={resolveIpfs(raffle.account.itemImageUri)}
+                    raffleKey={raffle.publicKey.toString()}
+                    raffleId={raffle.account.raffleId.toNumber()}
+                    onBuyTicket={() => handleOpenModal({
+                      maxTickets: raffle.account.maxTickets,
+                      ticketPrice: Number(raffle.account.ticketPrice),
+                      raffleKey: raffle.publicKey.toString(),
+                      sellerKey: raffle?.account?.seller.toString(),
+                      raffleId:raffle.account.raffleId.toNumber()
+                    })}
+                  />
                   ))}
                 </div>
               )}
@@ -303,13 +313,15 @@ export default function ExplorePage() {
       {
         isModalOpen &&
         <BuyTicketModal
+          ticketCount={numberOfTickets}
+          onTicketCountChange={setNumberOfTickets}
           onClose={() => setIsModalOpen(false)}
           isOpen={isModalOpen}
           maxTickets={numberOfTickets}
           ticketPrice={ticketPrice}
           isLoading={buyTicketLoading}
           onBuyTickets={handleBuyTicket}
-          buyTicketError={error || ticketError?.message || ""}
+          buyTicketError={error || ""}
         />
       }
       {
