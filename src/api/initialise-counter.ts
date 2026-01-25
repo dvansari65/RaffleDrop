@@ -19,7 +19,7 @@ export const initialiseCounter = () => {
                     [Buffer.from("global-counter")], // Check your Rust program for exact seeds
                     program.programId
                 )
-                const tx = await program.methods
+                const tx = await (program.methods as any)
                     .initialiseCounter()
                     .accounts({
                         counter: counterPda,

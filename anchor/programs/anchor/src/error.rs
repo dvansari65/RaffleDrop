@@ -49,5 +49,15 @@ pub enum RaffleError {
     #[msg("Arithmetic under flow")]
     UnderFlow,
     #[msg("Participants full!")]
-    RaffleFull
+    RaffleFull,
+    #[msg("Randomness expired!")]
+    RandomnessExpired,
+    #[msg("Randomness already expired!")]
+    RandomnessAlreadyRevealed,
+    #[msg("Invalid Raffle state!")]
+    InvalidRaffleState,
+    #[msg("Randomness not resolved!")]
+    RandomnessNotResolved,
+    #[msg("Winner already selected!")]
+    WinnerAlreadySelected
 }

@@ -1,28 +1,31 @@
 use crate::{
     error::RaffleError,
     events::{ProductDelivered, ProductShipped},
-    types::{Counter, RaffleAccount, RaffleStatus},
+    types::{Counter, EntropyVariable, RaffleAccount, RaffleStatus},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, Token, TokenAccount, Transfer},
 };
-use switchboard_on_demand::on_demand::accounts::pull_feed::PullFeedAccountData;
+use switchboard_on_demand::accounts::RandomnessAccountData;
 
 declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
 mod error;
 mod events;
+mod helpers;
 mod types;
 mod utils;
-mod helpers;
 
 #[program]
 pub mod Raffle {
 
     use super::*;
     use crate::{
-        error::RaffleError, events::{RaffleCreated, TicketsBought}, helpers::get_unix_timestamp, types::RaffleStatus
+        error::RaffleError,
+        events::{RaffleCreated, TicketsBought},
+        helpers::get_unix_timestamp,
+        types::RaffleStatus,
     };
 
     pub fn initialise_counter(ctx: Context<InitializeCounter>) -> Result<()> {
@@ -124,7 +127,7 @@ pub mod Raffle {
             raffle_account.status = RaffleStatus::Ended;
             require!(raffle_account.deadline > clock, RaffleError::DeadlinePassed);
         }
-        
+
         require!(
             raffle_account.is_sold_out == false,
             RaffleError::TicketsAlreadySold
@@ -178,7 +181,7 @@ pub mod Raffle {
         // FIX: Increment total_entries by num_tickets, not by 1
         raffle_account.total_entries = new_total_entries;
 
-         // Check if sold out based on TOTAL_ENTRIES
+        // Check if sold out based on TOTAL_ENTRIES
         let max_tickets = raffle_account.max_tickets;
         if raffle_account.total_entries >= max_tickets as u64 {
             raffle_account.is_sold_out = true;
@@ -188,8 +191,12 @@ pub mod Raffle {
             new_total_entries, // ← No reference, just value
             max_tickets,
         )?;
+        // asigning the progress
         raffle_account.progress = progress;
-
+        //changing the raffle status if participants becomes greater than equal to 2
+        if raffle_account.participants.len() >= 2 {
+            raffle_account.status = RaffleStatus::Drawing;
+        }
         // Emit event
         emit!(TicketsBought {
             buyer: buyer_key,
@@ -198,43 +205,33 @@ pub mod Raffle {
             total_tickets_now: raffle_account.total_entries,
             total_participants_now: raffle_account.participants.len() as u32
         });
-
         Ok(())
     }
+   
     pub fn draw_winner(ctx: Context<DrawWinner>) -> Result<()> {
-        let raffle_account = &mut ctx.accounts.raffle_account;
-       let time_stamp = get_unix_timestamp();
-        
+        let raffle = &mut ctx.accounts.raffle_account;
+        let current_timestamp = get_unix_timestamp();
+        // todo: check total collected must be greater than equal to the seller's product price
+        // for now we just have to check winner is selecting or not properly!
+        let entropy = &mut ctx.accounts.entropy_variable;
+        require!(current_timestamp > raffle.deadline as u64,RaffleError::DeadlineNotReached);
+        require!(!raffle.claimed,RaffleError::WinnerAlreadySelected);
         require!(
-            time_stamp > raffle_account.deadline as u64,
-            RaffleError::DeadlineNotReached
+            raffle.status == RaffleStatus::Drawing,
+            RaffleError::InvalidRaffleState
         );
-        require!(!raffle_account.claimed, RaffleError::AlreadyClaimed);
-        let randomness_data =
-            PullFeedAccountData::parse(ctx.accounts.randomness_account_data.try_borrow_data()?)
-                .map_err(|_| RaffleError::InvalidRandomnessAccount)?;
-
-        let staleness_time = time_stamp - randomness_data.last_update_timestamp as u64;
-        require!(staleness_time < 60, RaffleError::RandomnessTooOld);
-        
-        let value = randomness_data.result.value;
-        let random_bytes = value.to_le_bytes();
-        let mut bytes_array = [0u8; 8];
-        bytes_array.copy_from_slice(&random_bytes[0..8]);
-        let random_number = u64::from_ne_bytes(bytes_array);
-
-        let num_participants = raffle_account.participants.len();
-        let winner_index = (random_number as usize) % num_participants;
-        let winner = raffle_account.participants[winner_index];
-
-        raffle_account.winner = Some(winner);
-        raffle_account.claimed = true;
-        raffle_account.product_delivered_status = types::DeliveryStatus::Pending;
-        // we are not moving assets till the product not delivered to the winner!
-        raffle_account.randomness_account = Some(ctx.accounts.randomness_account_data.key());
-        msg!("Winner selected successfully:{}", winner);
+        let value = entropy.value;
+        let winner_index = value % raffle.participants.len() as u64;
+        let winner  = raffle.participants[winner_index as usize];
+      
+        raffle.winner = Some(winner);
+        raffle.claimed = true;
+        raffle.status = RaffleStatus::Completed;
+        msg!("Winner public key:{}",winner);
         Ok(())
     }
+    
+    
     pub fn mark_shipped(ctx: Context<MarkShipped>, tracking_info: Option<String>) -> Result<()> {
         let raffle_account = &mut ctx.accounts.raffle_account;
         let clock = Clock::get()?.unix_timestamp;
@@ -361,40 +358,12 @@ pub struct BuyTickets<'info> {
 
 #[derive(Accounts)]
 pub struct DrawWinner<'info> {
-    /// CHECK:  switchboard randomness account
-    pub randomness_account_data: AccountInfo<'info>,
-
-    #[account(
-        mut,
-        seeds=[b"raffle",
-        raffle_account.seller.key().as_ref(),
-        &raffle_account.raffle_id.to_le_bytes()
-        ],
-        bump = raffle_account.bump,
-        constraint = raffle_account.status == RaffleStatus::Active @ RaffleError::RaffleNotActive,
-        constraint = raffle_account.participants.len() > 0 @ RaffleError::NoParticipants,
-    )]
+    #[account(mut)]
     pub raffle_account: Account<'info, RaffleAccount>,
 
-    #[account(
-        mut,
-        seeds = [b"global-counter"],
-        bump
-    )]
-    pub counter: Account<'info, Counter>,
-
-    #[account(
-        mut,
-        seeds = [b"escrow_payment",raffle_account.seller.key().as_ref(),&raffle_account.raffle_id.to_le_bytes()],
-        bump
-    )]
-    pub escrow_payment_account: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub keeper: Signer<'info>,
-
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
+    /// CHECK: We are just reading the finalized value from this account
+    pub entropy_variable : Account<'info,EntropyVariable>,
+    pub signer: Signer<'info>,
 }
 
 #[derive(Accounts)]

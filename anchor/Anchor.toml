@@ -8,11 +8,17 @@ skip-lint = false
 [programs.localnet]
 anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
 
+[programs.devnet]
+anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
+
+[programs.mainnet]
+anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
+
 [registry]
-url = " http://127.0.0.1:8899"
+url = "http://127.0.0.1:8899"
 
 [provider]
-cluster = "localnet"
+cluster = "localnet"  
 wallet = "~/.config/solana/id.json"
 
 [scripts]

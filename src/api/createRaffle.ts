@@ -90,7 +90,7 @@ export const CreateRaffle = () => {
                     throw new Error(error.message)
                 }
 
-                const tx = await program.methods
+                const tx = await (program.methods as any)
                     .createRaffle(
                         itemName,
                         itemDescription,

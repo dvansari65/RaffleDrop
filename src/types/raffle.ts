@@ -290,113 +290,11 @@ export type Raffle = {
       ],
       "accounts": [
         {
-          "name": "randomnessAccountData"
-        },
-        {
           "name": "raffleAccount",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  97,
-                  102,
-                  102,
-                  108,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.seller",
-                "account": "raffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.raffle_id",
-                "account": "raffleAccount"
-              }
-            ]
-          }
+          "writable": true
         },
         {
-          "name": "counter",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrowPaymentAccount",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119,
-                  95,
-                  112,
-                  97,
-                  121,
-                  109,
-                  101,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.seller",
-                "account": "raffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.raffle_id",
-                "account": "raffleAccount"
-              }
-            ]
-          }
-        },
-        {
-          "name": "keeper",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "tokenProgram",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          "name": "randomnessAccountData"
         }
       ],
       "args": []
@@ -634,6 +532,33 @@ export type Raffle = {
           }
         }
       ]
+    },
+    {
+      "name": "requestDraw",
+      "discriminator": [
+        22,
+        180,
+        8,
+        81,
+        47,
+        21,
+        86,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "raffleAccount",
+          "writable": true
+        },
+        {
+          "name": "randomnessAccountData"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -838,6 +763,26 @@ export type Raffle = {
       "code": 6023,
       "name": "raffleFull",
       "msg": "Participants full!"
+    },
+    {
+      "code": 6024,
+      "name": "randomnessExpired",
+      "msg": "Randomness expired!"
+    },
+    {
+      "code": 6025,
+      "name": "randomnessAlreadyRevealed",
+      "msg": "Randomness already expired!"
+    },
+    {
+      "code": 6026,
+      "name": "invalidRaffleState",
+      "msg": "Invalid Raffle state!"
+    },
+    {
+      "code": 6027,
+      "name": "randomnessNotResolved",
+      "msg": "Randomness not resolved!"
     }
   ],
   "types": [
@@ -1003,6 +948,12 @@ export type Raffle = {
             "name": "randomnessAccount",
             "type": {
               "option": "pubkey"
+            }
+          },
+          {
+            "name": "randomnessCommitSlot",
+            "type": {
+              "option": "u64"
             }
           },
           {

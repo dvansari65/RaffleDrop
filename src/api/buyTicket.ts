@@ -20,15 +20,15 @@ export const buyTicket = () => {
         mutationFn: async ({ numTickets, sellerKey,raffleKey,raffleId }: buyTicketProps) => {
             try {
                 let tokenATA: PublicKey;
-              
+                
+                if (!publicKey) {
+                    throw new Error("Connect your wallet!")
+                }
+                
                 try {
                     tokenATA = await createTokenAccount()
                 } catch (error) {
                     throw error;
-                }
-
-                if (!publicKey) {
-                    throw new Error("Connect your wallet!")
                 }
 
                 if (!program?.programId) {
@@ -51,7 +51,7 @@ export const buyTicket = () => {
                     program.programId
                 )
 
-                const tx = await program.methods
+                const tx = await (program.methods as any)
                     .buyTickets(numTickets)
                     .accounts({
                         buyer: publicKey,

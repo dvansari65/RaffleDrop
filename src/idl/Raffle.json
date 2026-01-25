@@ -284,113 +284,11 @@
       ],
       "accounts": [
         {
-          "name": "randomness_account_data"
-        },
-        {
           "name": "raffle_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  97,
-                  102,
-                  102,
-                  108,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.seller",
-                "account": "RaffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.raffle_id",
-                "account": "RaffleAccount"
-              }
-            ]
-          }
+          "writable": true
         },
         {
-          "name": "counter",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "escrow_payment_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119,
-                  95,
-                  112,
-                  97,
-                  121,
-                  109,
-                  101,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.seller",
-                "account": "RaffleAccount"
-              },
-              {
-                "kind": "account",
-                "path": "raffle_account.raffle_id",
-                "account": "RaffleAccount"
-              }
-            ]
-          }
-        },
-        {
-          "name": "keeper",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "name": "randomness_account_data"
         }
       ],
       "args": []
@@ -628,6 +526,33 @@
           }
         }
       ]
+    },
+    {
+      "name": "request_draw",
+      "discriminator": [
+        22,
+        180,
+        8,
+        81,
+        47,
+        21,
+        86,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "raffle_account",
+          "writable": true
+        },
+        {
+          "name": "randomness_account_data"
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -832,6 +757,26 @@
       "code": 6023,
       "name": "RaffleFull",
       "msg": "Participants full!"
+    },
+    {
+      "code": 6024,
+      "name": "RandomnessExpired",
+      "msg": "Randomness expired!"
+    },
+    {
+      "code": 6025,
+      "name": "RandomnessAlreadyRevealed",
+      "msg": "Randomness already expired!"
+    },
+    {
+      "code": 6026,
+      "name": "InvalidRaffleState",
+      "msg": "Invalid Raffle state!"
+    },
+    {
+      "code": 6027,
+      "name": "RandomnessNotResolved",
+      "msg": "Randomness not resolved!"
     }
   ],
   "types": [
@@ -997,6 +942,12 @@
             "name": "randomness_account",
             "type": {
               "option": "pubkey"
+            }
+          },
+          {
+            "name": "randomness_commit_slot",
+            "type": {
+              "option": "u64"
             }
           },
           {
