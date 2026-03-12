@@ -17,10 +17,15 @@ const HeroSection = () => {
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/30 mb-8 animate-slide-up">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/60 border border-primary/30 shadow-[0_0_24px_rgba(248,113,113,0.3)] mb-8 animate-slide-up"
+            style={{ animationDelay: "0s" }}
+          >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-muted-foreground">Powered by Switchboard VRF</span>
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs md:text-sm font-mono text-muted-foreground">
+              Provably fair raffles • Powered by Switchboard VRF
+            </span>
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           </div>
 
           {/* Main Heading */}
