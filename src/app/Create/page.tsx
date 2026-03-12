@@ -1,45 +1,93 @@
-"use client"
-import { CreateRaffle } from '@/api/createRaffle';
-import { initialiseCounter } from '@/api/initialise-counter';
-import { CounterInitModal } from '@/components/modal/initialise-counter';
-import { deadlineTimestamp } from '@/helpers/deadlineTimestamp';
-import { CreateRaffleInputs } from '@/types/raffleType';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Clock, DollarSign, ImageIcon, Ticket, Users, Zap } from 'lucide-react';
-import React, { useState } from 'react'
-import { toast } from 'sonner';
+"use client";
+import { CreateRaffle } from "@/api/createRaffle";
+import { initialiseCounter } from "@/api/initialise-counter";
+import { CounterInitModal } from "@/components/modal/initialise-counter";
+import { deadlineTimestamp } from "@/helpers/deadlineTimestamp";
+import { CreateRaffleInputs } from "@/types/raffleType";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  ImageIcon,
+  Ticket,
+  Users,
+  Zap,
+} from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 function Page() {
-  const [itemName, setItemName] = useState("")
-  const [itemDescription, setItemDescription] = useState("")
-  const [image, setImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState('');
-  const [deadline, setDeadline] = useState("")
-  const [sellingPrice, setSellingPrice] = useState<number | null>(null)
-  const [ticketPrice, setTicketPrice] = useState<number | null>(null)
-  const [minTickets, setMinTickets] = useState(1)
-  const [maxTickets, setMaxTickets] = useState<number | null>(null)
-  const [counterInitModal, setCounterInitModal] = useState(false)
-  
-  const { mutate, isPending } = CreateRaffle()
-  const queryClient = useQueryClient()
-  const { mutate: counterInit, isPending: counterInitLoading } = initialiseCounter()
-  
-  const isFormValid = () => {
-    return itemName &&
-      itemDescription &&
-      image &&
-      sellingPrice &&
-      ticketPrice &&
-      minTickets &&
-      maxTickets &&
-      deadline &&
-      maxTickets >= minTickets
+  // Step state
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Form state
+  const [itemName, setItemName] = useState("");
+  const [itemDescription, setItemDescription] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [sellingPrice, setSellingPrice] = useState<number | null>(null);
+  const [ticketPrice, setTicketPrice] = useState<number | null>(null);
+  const [minTickets, setMinTickets] = useState(1);
+  const [maxTickets, setMaxTickets] = useState<number | null>(null);
+  const [counterInitModal, setCounterInitModal] = useState(false);
+
+  const { mutate, isPending } = CreateRaffle();
+  const queryClient = useQueryClient();
+  const { mutate: counterInit, isPending: counterInitLoading } =
+    initialiseCounter();
+
+  // Per-step validation to control navigation and CTA disable state
+  const isStep1Valid = useMemo(
+    () => Boolean(itemName && itemDescription && image),
+    [itemName, itemDescription, image]
+  );
+
+  // Step 2 only covers pricing; ticket counts belong to step 3.
+  const isStep2Valid = useMemo(
+    () =>
+      Boolean(
+        sellingPrice !== null &&
+          sellingPrice > 0 &&
+          ticketPrice !== null &&
+          ticketPrice > 0
+      ),
+    [sellingPrice, ticketPrice]
+  );
+
+  // Step 3: ticket configuration + deadline
+  const isStep3Valid = useMemo(
+    () =>
+      Boolean(
+        deadline &&
+          minTickets > 0 &&
+          maxTickets !== null &&
+          maxTickets >= minTickets
+      ),
+    [deadline, minTickets, maxTickets]
+  );
+
+  const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
+
+  const goNext = () => {
+    if (step === 1 && !isStep1Valid) return;
+    if (step === 2 && !isStep2Valid) return;
+    setStep((prev) => (prev < 3 ? ((prev + 1) as 1 | 2 | 3) : prev));
+  };
+
+  const goBack = () => {
+    setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3) : prev));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const timestamp = deadlineTimestamp(deadline)
+    e.preventDefault();
+    if (!isFormValid || !image || sellingPrice == null || ticketPrice == null || maxTickets == null) {
+      return;
+    }
+
+    const timestamp = deadlineTimestamp(deadline);
     const payload: CreateRaffleInputs = {
       itemName,
       itemDescription,
@@ -48,28 +96,30 @@ function Page() {
       ticketPrice,
       minTickets,
       maxTickets,
-      deadline: timestamp
-    }
+      deadline: timestamp,
+    };
     mutate(payload, {
       onSuccess: (tx) => {
         if (tx) {
           toast.success("Raffle created successfully!");
-          queryClient.invalidateQueries({ queryKey: ["raffle-accounts"] })
+          queryClient.invalidateQueries({ queryKey: ["raffle-accounts"] });
         }
       },
       onError: (error) => {
-        if (error.message.includes('0xbc4') ||
-          error.message.includes('AccountNotInitialized') ||
-          error.message.includes('Error Number: 3012')) {
+        if (
+          error.message.includes("0xbc4") ||
+          error.message.includes("AccountNotInitialized") ||
+          error.message.includes("Error Number: 3012")
+        ) {
           setCounterInitModal(true);
           toast.error("Counter needs to be initialized first");
         } else {
           toast.error(error.message);
         }
-        console.log("error from page:", error.message)
-      }
-    })
-  }
+        console.log("error from page:", error.message);
+      },
+    });
+  };
 
   const handleCounterInit = () => {
     counterInit(undefined, {
@@ -134,9 +184,53 @@ function Page() {
             <div className="absolute -inset-1 bg-gradient-to-r from-red-600/20 via-amber-600/20 to-red-600/20 rounded-2xl blur-xl"></div>
 
             <div className="relative bg-slate-900/80 backdrop-blur-sm rounded-2xl border border-red-900/50 p-8 md:p-12">
+              {/* Stepper header */}
+              <div className="mb-10 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 w-full">
+                  {[1, 2, 3].map((s, idx) => {
+                    const label =
+                      s === 1 ? "Item" : s === 2 ? "Pricing" : "Schedule";
+                    const isActive = step === s;
+                    const isCompleted = step > s;
+
+                    return (
+                      <div key={s} className="flex-1 flex items-center gap-3">
+                        <div
+                          className={`flex items-center justify-center w-9 h-9 rounded-full border text-sm font-mono ${
+                            isActive
+                              ? "bg-red-600 text-white border-red-400 shadow-red-900/40 shadow-lg"
+                              : isCompleted
+                              ? "bg-emerald-600 text-white border-emerald-400"
+                              : "bg-slate-900 text-slate-400 border-slate-700"
+                          }`}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-4 h-4" />
+                          ) : (
+                            s
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs uppercase tracking-wide text-slate-400 font-mono">
+                            Step {s}
+                          </span>
+                          <span className="text-sm text-slate-100 font-mono">
+                            {label}
+                          </span>
+                        </div>
+                        {idx < 2 && (
+                          <div className="flex-1 h-px bg-gradient-to-r from-red-900/60 to-transparent" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <form onSubmit={handleSubmit}>
-                {/* Item Details Section */}
-                <div className="mb-12">
+                {/* Step 1: Item Details */}
+                {step === 1 && (
+                  <div className="mb-12">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="relative">
                       <div className="absolute inset-0 bg-red-500/20 blur-md rounded-xl"></div>
@@ -215,10 +309,12 @@ function Page() {
                       </div>
                     </div>
                   </div>
-                </div>
+                  </div>
+                )}
 
-                {/* Pricing Section */}
-                <div className="mb-12">
+                {/* Step 2: Pricing Section */}
+                {step === 2 && (
+                  <div className="mb-12">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="relative">
                       <div className="absolute inset-0 bg-amber-500/20 blur-md rounded-xl"></div>
@@ -261,10 +357,13 @@ function Page() {
                       <p className="mt-2 text-xs text-slate-500 font-mono">Price per raffle ticket</p>
                     </div>
                   </div>
-                </div>
+                  </div>
+                )}
 
-                {/* Ticket Configuration Section */}
-                <div className="mb-12">
+                {/* Step 3: Ticket Configuration + Duration */}
+                {step === 3 && (
+                  <>
+                    <div className="mb-12">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="relative">
                       <div className="absolute inset-0 bg-red-500/20 blur-md rounded-xl"></div>
@@ -309,10 +408,10 @@ function Page() {
                       <p className="mt-2 text-xs text-slate-500 font-mono">Maximum tickets available</p>
                     </div>
                   </div>
-                </div>
+                    </div>
 
-                {/* Duration Section */}
-                <div className="mb-12">
+                    {/* Duration Section */}
+                    <div className="mb-12">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="relative">
                       <div className="absolute inset-0 bg-red-500/20 blur-md rounded-xl"></div>
@@ -338,37 +437,66 @@ function Page() {
                     />
                     <p className="mt-2 text-xs text-slate-500 font-mono">When the raffle will end and winner will be selected</p>
                   </div>
-                </div>
+                    </div>
+                  </>
+                )}
 
-                {/* Submit Section */}
-                <div className="pt-8 border-t border-red-900/30">
-                  <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-amber-600 to-red-600 rounded-xl blur opacity-30 group-hover:opacity-50 transition"></div>
-                    <button
-                      type="submit"
-                      disabled={!isFormValid() || isPending}
-                      className="relative w-full group bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed text-white disabled:text-slate-400 font-bold px-10 py-4 text-lg rounded-xl shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-800/60 transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
-                    >
-                      {isPending ? (
-                        <>
-                          <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                          Creating Raffle...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-5 h-5" />
-                          Create Raffle
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </button>
+                {/* Footer / Navigation */}
+                <div className="pt-8 border-t border-red-900/30 flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {step > 1 && (
+                      <button
+                        type="button"
+                        onClick={goBack}
+                        className="w-full md:w-auto px-6 py-3 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-200 font-mono text-sm hover:bg-slate-800/80 transition flex items-center justify-center gap-2"
+                      >
+                        Back
+                      </button>
+                    )}
+
+                    {step < 3 && (
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        disabled={
+                          (step === 1 && !isStep1Valid) ||
+                          (step === 2 && !isStep2Valid)
+                        }
+                        className="w-full md:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed text-white font-mono text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition"
+                      >
+                        Continue
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {step === 3 && (
+                      <button
+                        type="submit"
+                        disabled={!isFormValid || isPending}
+                        className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed text-white font-bold text-sm md:text-base uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-900/50 hover:shadow-xl hover:shadow-red-800/60 transition"
+                      >
+                        {isPending ? (
+                          <>
+                            <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                            Creating Raffle...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-5 h-5" />
+                            Create Raffle
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
 
-                  <div className="mt-6 p-4 bg-red-950/30 border border-red-800/30 rounded-xl backdrop-blur-sm">
+                  <div className="mt-2 p-4 bg-red-950/30 border border-red-800/30 rounded-xl backdrop-blur-sm">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
                       <p className="text-sm text-red-300/80 text-center font-mono">
-                        Your raffle will be secured on-chain with transparent, verifiable randomness
+                        Your raffle will be secured on-chain with transparent,
+                        verifiable randomness
                       </p>
                     </div>
                   </div>
