@@ -8,7 +8,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, Token, TokenAccount, Transfer},
 };
-use switchboard_on_demand::accounts::RandomnessAccountData;
+use sha2::{Sha256, Digest};
 
 declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
 mod error;
@@ -123,9 +123,13 @@ pub mod Raffle {
             RaffleError::RaffleNotActive
         );
         require!(num_tickets > 0, RaffleError::InvalidTicketCount);
-        if raffle_account.deadline > clock {
+
+        // Only end the raffle and block purchases AFTER the deadline has passed.
+        // Previously this condition was inverted, which immediately marked the
+        // raffle as Ended while it was still active, causing RaffleNotActive errors.
+        if clock > raffle_account.deadline {
             raffle_account.status = RaffleStatus::Ended;
-            require!(raffle_account.deadline > clock, RaffleError::DeadlinePassed);
+            return err!(RaffleError::DeadlinePassed);
         }
 
         require!(
@@ -210,28 +214,56 @@ pub mod Raffle {
    
     pub fn draw_winner(ctx: Context<DrawWinner>) -> Result<()> {
         let raffle = &mut ctx.accounts.raffle_account;
-        let current_timestamp = get_unix_timestamp();
-        // todo: check total collected must be greater than equal to the seller's product price
-        // for now we just have to check winner is selecting or not properly!
-        let entropy = &mut ctx.accounts.entropy_variable;
-        require!(current_timestamp > raffle.deadline as u64,RaffleError::DeadlineNotReached);
-        require!(!raffle.claimed,RaffleError::WinnerAlreadySelected);
+        let current_timestamp = get_unix_timestamp() as u64;
+        
+        // Checks
+        require!(
+            current_timestamp > raffle.deadline as u64,
+            RaffleError::DeadlineNotReached
+        );
+        require!(
+            !raffle.claimed,
+            RaffleError::WinnerAlreadySelected
+        );
         require!(
             raffle.status == RaffleStatus::Drawing,
             RaffleError::InvalidRaffleState
         );
-        let value = entropy.value;
-        let winner_index = value % raffle.participants.len() as u64;
-        let winner  = raffle.participants[winner_index as usize];
-      
+        require!(
+            !raffle.participants.is_empty(),
+            RaffleError::NoParticipants
+        );
+    
+        // Get the current slot from clock sysvar
+        let slot = ctx.accounts.clock.slot;
+        
+        // Create SHA-256 hash of the slot
+        let mut hasher = Sha256::new();
+        hasher.update(slot.to_be_bytes());
+        let hash = hasher.finalize();
+        
+        // Convert first 8 bytes of hash to u64
+        let random_number = u64::from_be_bytes(
+            hash[..8].try_into().unwrap()
+        );
+        
+        // Calculate winner index using modulo
+        let winner_index = (random_number % raffle.participants.len() as u64) as usize;
+        let winner = raffle.participants[winner_index];
+    
+        // Update raffle state
         raffle.winner = Some(winner);
         raffle.claimed = true;
         raffle.status = RaffleStatus::Completed;
-        msg!("Winner public key:{}",winner);
+        
+        msg!("Slot used for randomness: {}", slot);
+        msg!("Random number generated: {}", random_number);
+        msg!("Winner index: {}", winner_index);
+        msg!("Winner public key: {}", winner);
+    
         Ok(())
     }
-    
-    
+
     pub fn mark_shipped(ctx: Context<MarkShipped>, tracking_info: Option<String>) -> Result<()> {
         let raffle_account = &mut ctx.accounts.raffle_account;
         let clock = Clock::get()?.unix_timestamp;
@@ -248,7 +280,6 @@ pub mod Raffle {
 
         Ok(())
     }
-
     pub fn mark_delivered(
         ctx: Context<MarkDelivered>,
         tracking_info: Option<String>,
@@ -355,15 +386,15 @@ pub struct BuyTickets<'info> {
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
-
 #[derive(Accounts)]
 pub struct DrawWinner<'info> {
     #[account(mut)]
     pub raffle_account: Account<'info, RaffleAccount>,
-
-    /// CHECK: We are just reading the finalized value from this account
-    pub entropy_variable : Account<'info,EntropyVariable>,
+    
     pub signer: Signer<'info>,
+    
+    /// The clock sysvar provides the current slot (used for randomness)
+    pub clock: Sysvar<'info, Clock>,
 }
 
 #[derive(Accounts)]
