@@ -3,28 +3,173 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 68 100% 50%;
-    --primary-foreground: 0 0% 0%;
-    --secondary: 72 100% 50%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 68 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Deep midnight slate background */
+    --background: 222 84% 5%;
+    --foreground: 210 40% 98%;
+
+    /* Card / surfaces */
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary: raffl-style neon red */
+    --primary: 0 84% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: desaturated violet slate */
+    --secondary: 258 32% 20%;
+    --secondary-foreground: 210 40% 96%;
+
+    /* Muted content / subtle backgrounds */
+    --muted: 222 32% 12%;
+    --muted-foreground: 215 20% 65%;
+
+    /* Accent: warm amber for highlights */
+    --accent: 32 96% 55%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Destructive */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 68 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Borders / inputs / focus ring */
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 0 84% 60%;
+
     --radius: 0.75rem;
-    --lime: 68 100% 50%;
-    --lime-light: 72 100% 50%;
-    --lime-glow: 68 100% 50%;
+    /* Legacy lime tokens kept for backward compatibility but aligned to accent */
+    --lime: 32 96% 55%;
+    --lime-light: 32 96% 62%;
+    --lime-glow: 32 96% 55%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Tailwind v4 theme tokens so utilities like bg-background/text-foreground work */
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
+@layer utilities {
+  /* Subtle grid used across hero/sections */
+  .grid-pattern {
+    background-image: linear-gradient(
+        to right,
+        hsl(var(--border) / 0.12) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        hsl(var(--border) / 0.12) 1px,
+        transparent 1px
+      );
+    background-size: 40px 40px;
+    background-position: center;
+  }
+
+  .text-gradient {
+    background-image: linear-gradient(
+      120deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 45%,
+      hsl(var(--primary)) 90%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glass {
+    background-color: hsl(var(--background) / 0.7);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .glow {
+    box-shadow:
+      0 0 24px hsl(var(--primary) / 0.32),
+      0 0 60px hsl(var(--primary) / 0.18);
+  }
+
+  /* Animations */
+  .animate-pulse-glow {
+    animation: pulse-glow 6s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.7s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out both;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
