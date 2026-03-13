@@ -18,7 +18,7 @@ interface RaffleCardProps {
   status: "active" | "drawing" | "completed" | "cancelled" | "refunded" | "ended";
   sellerKey: string;
   claimed: boolean;
-  winner: string;
+  winner: string | undefined;
   raffleKey: string;
   entries: number;
   isSoldOut: boolean;
