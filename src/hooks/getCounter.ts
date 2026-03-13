@@ -11,7 +11,7 @@ export const useGetCounter = ()=>{
                 [Buffer.from("global-counter")], 
                 program.programId
             )
-            const counterInfo = await program.account.counter.fetch(counterPda,"confirmed")
+            const counterInfo = await program.account.counter.fetch(counterPda,"confirmed");
             return counterInfo.counter
         } catch (error) {
             console.error("counter value error:",error)
