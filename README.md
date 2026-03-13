@@ -2,13 +2,12 @@
 
 🎯 Overview
 
-LuckyBid is a decentralized raffle-style marketplace where anyone can sell real-world or digital products, and buyers participate for a chance to win them at a fraction of the cost. Once the minimum funding goal (tickets sold) is met, a verifiably-random winner is selected using Switchboard VRF — ensuring fairness, transparency, and zero-trust execution on the Solana blockchain.
+LuckyBid is a decentralized raffle-style marketplace where anyone can sell real-world or digital products, and buyers participate for a chance to win them at a fraction of the cost. Once the minimum funding goal (tickets sold) is met, a verifiably-random winner is selected — ensuring fairness, transparency, and zero-trust execution on the Solana blockchain.
 
 ✨ Key Features
 
 💰 Seller Guarantee: Sellers receive the full selling price when the raffle concludes successfully  
-🎟️ Affordable Participation: Buyers pay only a small entry fee for a chance to win high-value items  
-⚖️ Provably Fair Selection: Winners are chosen using verifiable on-chain randomness (Switchboard VRF)  
+🎟️ Affordable Participation: Buyers pay only a small entry fee for a chance to win high-value items 
 📜 Smart-Legal Contracts: Optional legally-binding agreements prevent sellers from listing products elsewhere  
 🔒 Secure Escrow: All funds are held in Program Derived Address (PDA) vaults until conditions are met  
 
