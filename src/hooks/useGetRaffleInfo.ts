@@ -14,9 +14,6 @@ export const useRaffleAccount = () => {
         if (!accounts || accounts.length === 0) {
           return []
         }
-        const currentTime = Math.floor(Date.now()/1000)
-        console.log("current time:",currentTime)
-        console.log("deadline:",accounts[1]?.account.deadline.toNumber())
         return accounts
       } catch (error: any) {
         console.log("error:",error)
