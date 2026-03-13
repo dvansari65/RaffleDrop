@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react'
 
 const RaffleCardLoader: React.FC = () => {
   return (
@@ -21,8 +21,8 @@ const RaffleCardLoader: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const RaffleCardLoaderGrid: React.FC<{ count?: number }> = ({ count = 6 }) => {
   return (
@@ -31,7 +31,7 @@ export const RaffleCardLoaderGrid: React.FC<{ count?: number }> = ({ count = 6 }
         <RaffleCardLoader key={i} />
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default RaffleCardLoader;
+export default RaffleCardLoader

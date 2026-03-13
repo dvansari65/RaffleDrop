@@ -1,9 +1,9 @@
-import CTASection from "@/components/CtaSection";
-import FAQSection from "@/components/FAQsection";
-import FeaturesSection from "@/components/Feature";
-import HeroSection from "@/components/HeroSection";
-import HowItWorksSection from "@/components/HowItWorks";
-import StatsSection from "@/components/StatsSection";
+import CTASection from '@/components/CtaSection'
+import FAQSection from '@/components/FAQsection'
+import FeaturesSection from '@/components/Feature'
+import HeroSection from '@/components/HeroSection'
+import HowItWorksSection from '@/components/HowItWorks'
+import StatsSection from '@/components/StatsSection'
 
 const Index = () => {
   return (
@@ -24,7 +24,7 @@ const Index = () => {
       <FAQSection />
       <CTASection />
     </div>
-  );
-};
+  )
+}
 
-export default Index;
+export default Index

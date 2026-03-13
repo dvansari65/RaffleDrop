@@ -1,105 +1,120 @@
-"use client"
-import React, { useState } from "react";
-import { Ticket, Clock, Users, Trophy, TrendingUp, Crown, CheckCircle2, XCircle, Loader2, Ban, RotateCcw, Flame, Copy, Check } from "lucide-react";
-import { getTimeLeftFromUnix } from "@/helpers/formatTimestamp";
-import { LinearProgressWithLabel } from "../ui/progress-bar";
-import { SMALLEST_TOKEN_UNIT } from "@/constants/smallest-token-unit";
-import RaffleButton from "../ui/raffle-button";
+'use client'
+import React, { useState } from 'react'
+import {
+  Ticket,
+  Clock,
+  Users,
+  Trophy,
+  TrendingUp,
+  Crown,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Ban,
+  RotateCcw,
+  Flame,
+  Copy,
+  Check,
+} from 'lucide-react'
+import { getTimeLeftFromUnix } from '@/helpers/formatTimestamp'
+import { LinearProgressWithLabel } from '../ui/progress-bar'
+import { SMALLEST_TOKEN_UNIT } from '@/constants/smallest-token-unit'
+import RaffleButton from '../ui/raffle-button'
 
 interface RaffleCardProps {
-  itemName: string;
-  itemDescription: string;
-  itemImage: string | null;
-  sellingPrice: number;
-  ticketPrice: number;
-  totalCollected: number;
-  maxTickets: number;
-  deadline: number;
-  status: "active" | "drawing" | "completed" | "cancelled" | "refunded" | "ended";
-  sellerKey: string;
-  claimed: boolean;
-  winner: string | undefined;
-  raffleKey: string;
-  entries: number;
-  isSoldOut: boolean;
-  progress: number | undefined;
-  raffleId: number;
-  onBuyTicket: ({ maxTickets, raffleId }: { maxTickets: number; raffleId: number }) => void;
+  itemName: string
+  itemDescription: string
+  itemImage: string | null
+  sellingPrice: number
+  ticketPrice: number
+  totalCollected: number
+  maxTickets: number
+  deadline: number
+  status: 'active' | 'drawing' | 'completed' | 'cancelled' | 'refunded' | 'ended'
+  sellerKey: string
+  claimed: boolean
+  winner: string | undefined
+  raffleKey: string
+  entries: number
+  isSoldOut: boolean
+  progress: number | undefined
+  raffleId: number
+  onBuyTicket: ({ maxTickets, raffleId }: { maxTickets: number; raffleId: number }) => void
 }
 
 function truncateAddress(address: string) {
-  if (!address || address.length < 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  if (!address || address.length < 10) return address
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
 const STATUS_CONFIG = {
   active: {
-    label: "Live",
-    labelColor: "text-emerald-400",
-    badgeBg: "bg-emerald-500/10 border-emerald-500/25",
-    cardBorder: "border-border hover:border-primary/40",
-    cardShadow: "hover:shadow-[0_0_32px_hsl(var(--primary)/0.15)]",
+    label: 'Live',
+    labelColor: 'text-emerald-400',
+    badgeBg: 'bg-emerald-500/10 border-emerald-500/25',
+    cardBorder: 'border-border hover:border-primary/40',
+    cardShadow: 'hover:shadow-[0_0_32px_hsl(var(--primary)/0.15)]',
     headerOverlay: null,
     pulse: true,
-    dotColor: "bg-emerald-400",
+    dotColor: 'bg-emerald-400',
     Icon: Flame,
   },
   drawing: {
-    label: "Drawing",
-    labelColor: "text-accent",
-    badgeBg: "bg-accent/10 border-accent/25",
-    cardBorder: "border-accent/40",
-    cardShadow: "shadow-[0_0_28px_hsl(var(--accent)/0.12)]",
+    label: 'Drawing',
+    labelColor: 'text-accent',
+    badgeBg: 'bg-accent/10 border-accent/25',
+    cardBorder: 'border-accent/40',
+    cardShadow: 'shadow-[0_0_28px_hsl(var(--accent)/0.12)]',
     headerOverlay: null,
     pulse: true,
-    dotColor: "bg-accent",
+    dotColor: 'bg-accent',
     Icon: Loader2,
   },
   completed: {
-    label: "Completed",
-    labelColor: "text-primary",
-    badgeBg: "bg-primary/10 border-primary/25",
-    cardBorder: "border-primary/50",
-    cardShadow: "shadow-[0_0_36px_hsl(var(--primary)/0.20)]",
-    headerOverlay: "bg-primary/8",
+    label: 'Completed',
+    labelColor: 'text-primary',
+    badgeBg: 'bg-primary/10 border-primary/25',
+    cardBorder: 'border-primary/50',
+    cardShadow: 'shadow-[0_0_36px_hsl(var(--primary)/0.20)]',
+    headerOverlay: 'bg-primary/8',
     pulse: false,
-    dotColor: "bg-primary",
+    dotColor: 'bg-primary',
     Icon: Crown,
   },
   cancelled: {
-    label: "Cancelled",
-    labelColor: "text-muted-foreground",
-    badgeBg: "bg-muted/60 border-border",
-    cardBorder: "border-border opacity-70",
-    cardShadow: "",
-    headerOverlay: "bg-background/50",
+    label: 'Cancelled',
+    labelColor: 'text-muted-foreground',
+    badgeBg: 'bg-muted/60 border-border',
+    cardBorder: 'border-border opacity-70',
+    cardShadow: '',
+    headerOverlay: 'bg-background/50',
     pulse: false,
-    dotColor: "bg-muted-foreground",
+    dotColor: 'bg-muted-foreground',
     Icon: XCircle,
   },
   refunded: {
-    label: "Refunded",
-    labelColor: "text-muted-foreground",
-    badgeBg: "bg-muted/60 border-border",
-    cardBorder: "border-border opacity-70",
-    cardShadow: "",
-    headerOverlay: "bg-background/50",
+    label: 'Refunded',
+    labelColor: 'text-muted-foreground',
+    badgeBg: 'bg-muted/60 border-border',
+    cardBorder: 'border-border opacity-70',
+    cardShadow: '',
+    headerOverlay: 'bg-background/50',
     pulse: false,
-    dotColor: "bg-muted-foreground",
+    dotColor: 'bg-muted-foreground',
     Icon: RotateCcw,
   },
   ended: {
-    label: "Ended",
-    labelColor: "text-muted-foreground",
-    badgeBg: "bg-muted/60 border-border",
-    cardBorder: "border-border opacity-70",
-    cardShadow: "",
-    headerOverlay: "bg-background/50",
+    label: 'Ended',
+    labelColor: 'text-muted-foreground',
+    badgeBg: 'bg-muted/60 border-border',
+    cardBorder: 'border-border opacity-70',
+    cardShadow: '',
+    headerOverlay: 'bg-background/50',
     pulse: false,
-    dotColor: "bg-muted-foreground",
+    dotColor: 'bg-muted-foreground',
     Icon: Ban,
   },
-};
+}
 
 export const RaffleCard: React.FC<RaffleCardProps> = ({
   itemName,
@@ -120,39 +135,40 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
   claimed,
   sellerKey,
 }) => {
-  const { days, hours, minutes, isExpired } = getTimeLeftFromUnix(deadline);
-  const [copied, setCopied] = useState(false);
+  const { days, hours, minutes, isExpired } = getTimeLeftFromUnix(deadline)
+  const [copied, setCopied] = useState(false)
 
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.ended;
-  const StatusIcon = cfg.Icon;
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.ended
+  const StatusIcon = cfg.Icon
 
-  const isActive = status === "active";
-  const isDrawing = status === "drawing";
-  const isCompleted = status === "completed";
-  const isInactive = status === "cancelled" || status === "refunded" || status === "ended";
-  const hasWinner = isCompleted && !!winner;
+  const isActive = status === 'active'
+  const isDrawing = status === 'drawing'
+  const isCompleted = status === 'completed'
+  const isInactive = status === 'cancelled' || status === 'refunded' || status === 'ended'
+  const hasWinner = isCompleted && !!winner
 
-  const formattedTicketPrice = ticketPrice;
-  const formattedTotalCollected = totalCollected / SMALLEST_TOKEN_UNIT;
-  const formattedSellingPrice = sellingPrice / SMALLEST_TOKEN_UNIT;
+  const formattedTicketPrice = ticketPrice
+  const formattedTotalCollected = totalCollected / SMALLEST_TOKEN_UNIT
+  const formattedSellingPrice = sellingPrice / SMALLEST_TOKEN_UNIT
 
   const handleCopy = () => {
-    if (!winner) return;
-    navigator.clipboard.writeText(winner);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    if (!winner) return
+    navigator.clipboard.writeText(winner)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <div className={`relative rounded-[var(--radius)] border bg-card flex flex-col overflow-hidden transition-all duration-300 ${cfg.cardBorder} ${cfg.cardShadow}`}>
-
+    <div
+      className={`relative rounded-[var(--radius)] border bg-card flex flex-col overflow-hidden transition-all duration-300 ${cfg.cardBorder} ${cfg.cardShadow}`}
+    >
       {/* ── IMAGE ── */}
       <div className="relative h-52 shrink-0 overflow-hidden bg-muted">
         {itemImage ? (
           <img
             src={itemImage}
             alt={itemName}
-            className={`absolute inset-0 h-full w-full object-cover transition-transform duration-500 ${isActive ? "hover:scale-105" : ""} ${isInactive ? "grayscale opacity-50" : ""}`}
+            className={`absolute inset-0 h-full w-full object-cover transition-transform duration-500 ${isActive ? 'hover:scale-105' : ''} ${isInactive ? 'grayscale opacity-50' : ''}`}
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center">
@@ -161,22 +177,24 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
         )}
 
         {/* Status overlay tint */}
-        {cfg.headerOverlay && (
-          <div className={`absolute inset-0 ${cfg.headerOverlay}`} />
-        )}
+        {cfg.headerOverlay && <div className={`absolute inset-0 ${cfg.headerOverlay}`} />}
 
         {/* Fade to card at bottom so progress bar reads cleanly */}
         <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-card to-transparent" />
 
         {/* STATUS BADGE */}
-        <div className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold backdrop-blur-sm ${cfg.badgeBg} ${cfg.labelColor}`}>
+        <div
+          className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold backdrop-blur-sm ${cfg.badgeBg} ${cfg.labelColor}`}
+        >
           {cfg.pulse ? (
             <span className="relative flex h-2 w-2 shrink-0">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${cfg.dotColor}`} />
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${cfg.dotColor}`}
+              />
               <span className={`relative inline-flex h-2 w-2 rounded-full ${cfg.dotColor}`} />
             </span>
           ) : (
-            <StatusIcon className={`w-3 h-3 ${isDrawing ? "animate-spin" : ""}`} />
+            <StatusIcon className={`w-3 h-3 ${isDrawing ? 'animate-spin' : ''}`} />
           )}
           {cfg.label}
         </div>
@@ -195,11 +213,15 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
 
       {/* ── WINNER BANNER — only when completed ── */}
       {isCompleted && (
-        <div className={`mx-3 mt-3 rounded-xl border p-3 ${hasWinner ? "bg-primary/6 border-primary/30" : "bg-muted/40 border-border"}`}>
+        <div
+          className={`mx-3 mt-3 rounded-xl border p-3 ${hasWinner ? 'bg-primary/6 border-primary/30' : 'bg-muted/40 border-border'}`}
+        >
           <div className="flex items-center gap-2 mb-2">
-            <Crown className={`w-4 h-4 shrink-0 ${hasWinner ? "text-accent" : "text-muted-foreground"}`} />
-            <span className={`text-xs font-bold uppercase tracking-widest ${hasWinner ? "text-foreground" : "text-muted-foreground"}`}>
-              {hasWinner ? "Winner Selected" : "No Winner"}
+            <Crown className={`w-4 h-4 shrink-0 ${hasWinner ? 'text-accent' : 'text-muted-foreground'}`} />
+            <span
+              className={`text-xs font-bold uppercase tracking-widest ${hasWinner ? 'text-foreground' : 'text-muted-foreground'}`}
+            >
+              {hasWinner ? 'Winner Selected' : 'No Winner'}
             </span>
             {claimed && hasWinner && (
               <span className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -216,9 +238,11 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
               className="w-full flex items-center justify-between bg-background/50 hover:bg-background border border-border hover:border-primary/40 rounded-lg px-3 py-2 transition-all"
             >
               <span className="font-mono text-sm text-foreground/80">{truncateAddress(winner)}</span>
-              <span className={`flex items-center gap-1 text-[11px] transition-colors ${copied ? "text-emerald-400" : "text-muted-foreground"}`}>
+              <span
+                className={`flex items-center gap-1 text-[11px] transition-colors ${copied ? 'text-emerald-400' : 'text-muted-foreground'}`}
+              >
                 {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {copied ? "Copied!" : "Copy"}
+                {copied ? 'Copied!' : 'Copy'}
               </span>
             </button>
           ) : (
@@ -240,7 +264,6 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
 
       {/* ── BODY ── */}
       <div className="flex flex-col gap-3 p-4 flex-1">
-
         {/* Title + Description */}
         <div>
           <h3 className="text-base font-bold text-card-foreground line-clamp-1">{itemName}</h3>
@@ -260,14 +283,16 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
               <Clock className="w-3.5 h-3.5 text-primary" />
-              {isExpired ? "Ended" : "Ends In"}
+              {isExpired ? 'Ended' : 'Ends In'}
             </div>
             <p className="text-sm font-bold text-card-foreground tabular-nums">
-              {isExpired
-                ? <span className="text-muted-foreground">—</span>
-                : days > 0
-                ? `${days}d ${hours}h`
-                : `${hours}h ${minutes}m`}
+              {isExpired ? (
+                <span className="text-muted-foreground">—</span>
+              ) : days > 0 ? (
+                `${days}d ${hours}h`
+              ) : (
+                `${hours}h ${minutes}m`
+              )}
             </p>
           </div>
 
@@ -317,5 +342,5 @@ export const RaffleCard: React.FC<RaffleCardProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
+anchor = "F1o3uGF7BP9tTvNXEPLFHtynamJfwpFkBAwsds1nEx8p"
 
 [programs.devnet]
 anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"

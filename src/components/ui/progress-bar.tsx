@@ -1,14 +1,12 @@
-import * as React from "react";
-import LinearProgress, { LinearProgressProps } from "@mui/material/LinearProgress";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+import * as React from 'react'
+import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
-export function LinearProgressWithLabel(
-  props: LinearProgressProps & { value: number }
-) {
+export function LinearProgressWithLabel(props: LinearProgressProps & { value: number }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", width: '100%' }}>
-      <Box sx={{ width: "100%", mr: 1, position: 'relative' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <Box sx={{ width: '100%', mr: 1, position: 'relative' }}>
         {/* Background glow effect */}
         <Box
           sx={{
@@ -23,7 +21,7 @@ export function LinearProgressWithLabel(
             zIndex: 1,
           }}
         />
-        
+
         {/* Progress bar with glowing color */}
         <LinearProgress
           variant="determinate"
@@ -45,17 +43,17 @@ export function LinearProgressWithLabel(
         />
       </Box>
       <Box sx={{ minWidth: 36 }}>
-        <Typography 
-          variant="body2" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          sx={{
             color: '#3b82f6',
             fontWeight: 600,
-            textShadow: '0 0 8px rgba(59, 130, 246, 0.2)'
+            textShadow: '0 0 8px rgba(59, 130, 246, 0.2)',
           }}
         >
           {`${Math.round(props.value)}%`}
         </Typography>
       </Box>
     </Box>
-  );
+  )
 }

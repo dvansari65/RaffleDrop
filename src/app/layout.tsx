@@ -14,7 +14,7 @@ const links: { label: string; path: string }[] = [
   // More links...
   { label: 'Home', path: '/' },
   { label: 'Explore', path: '/Explore' },
-  { label: 'Create', path: '/Create' }
+  { label: 'Create', path: '/Create' },
 ]
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`antialiased`}>
         <AppProviders>
           <AppLayout links={links}>{children}</AppLayout>
-          <Toaster/>
+          <Toaster />
         </AppProviders>
       </body>
     </html>

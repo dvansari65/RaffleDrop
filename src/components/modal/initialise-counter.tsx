@@ -1,34 +1,34 @@
-import { X } from 'lucide-react';
-import React from 'react';
+import { X } from 'lucide-react'
+import React from 'react'
 
 interface CounterInitModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onProceed: () => void;
-  isPending?: boolean;
+  isOpen: boolean
+  onClose: () => void
+  onProceed: () => void
+  isPending?: boolean
 }
 
 export const CounterInitModal: React.FC<CounterInitModalProps> = ({
   isOpen,
   onClose,
   onProceed,
-  isPending = false
+  isPending = false,
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="relative w-full max-w-md animate-in zoom-in-95 duration-200">
         {/* Glowing border effect */}
         <div className="absolute -inset-1 bg-gradient-to-r from-red-600/30 via-amber-600/30 to-red-600/30 rounded-2xl blur-xl" />
-        
+
         <div className="relative bg-slate-900 border border-red-900/50 rounded-2xl p-8">
           {/* Close button */}
           <button
@@ -43,16 +43,13 @@ export const CounterInitModal: React.FC<CounterInitModalProps> = ({
           <div className="mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-950/50 backdrop-blur-sm rounded-full border border-red-800/50 mb-4">
               <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-bold text-red-400 uppercase tracking-wider font-mono">
-                Setup Required
-              </span>
+              <span className="text-xs font-bold text-red-400 uppercase tracking-wider font-mono">Setup Required</span>
             </div>
 
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Initialize Counter
-            </h2>
+            <h2 className="text-2xl font-bold text-white mb-2">Initialize Counter</h2>
             <p className="text-slate-400 font-mono text-sm">
-              Before creating your first raffle, we need to initialize the counter account on-chain. This is a one-time setup.
+              Before creating your first raffle, we need to initialize the counter account on-chain. This is a one-time
+              setup.
             </p>
           </div>
 
@@ -91,5 +88,5 @@ export const CounterInitModal: React.FC<CounterInitModalProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

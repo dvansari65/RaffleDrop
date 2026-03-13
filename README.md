@@ -1,4 +1,4 @@
-# RaffleDrop 
+# RaffleDrop
 
 🎯 Overview
 
@@ -7,11 +7,12 @@ LuckyBid is a decentralized raffle-style marketplace where anyone can sell real-
 ✨ Key Features
 
 💰 Seller Guarantee: Sellers receive the full selling price when the raffle concludes successfully  
-🎟️ Affordable Participation: Buyers pay only a small entry fee for a chance to win high-value items 
+🎟️ Affordable Participation: Buyers pay only a small entry fee for a chance to win high-value items
 📜 Smart-Legal Contracts: Optional legally-binding agreements prevent sellers from listing products elsewhere  
-🔒 Secure Escrow: All funds are held in Program Derived Address (PDA) vaults until conditions are met  
+🔒 Secure Escrow: All funds are held in Program Derived Address (PDA) vaults until conditions are met
 
 🏗️ System Architecture
+
 ```mermaid
 flowchart TD
     A[User / Buyer / Seller] --> B[Next.js Web App]
@@ -41,31 +42,37 @@ flowchart TD
 🚀 Quick Start
 
 ### Step 1: Install dependencies
+
 ```bash
 pnpm install
 ```
 
 ### Step 2: Sync program ID
+
 ```bash
 pnpm anchor keys sync
 ```
 
 ### Step 3: Build the program
+
 ```bash
 pnpm anchor build
 ```
 
 ### Step 4: Deploy to devnet
+
 ```bash
 pnpm anchor deploy --provider.cluster devnet
 ```
 
 ### Step 5: Start the frontend
+
 ```bash
 pnpm dev
 ```
 
 ### Notes:
+
 - Ensure you have `pnpm` installed globally. If not, install it using:
   ```bash
   npm install -g pnpm

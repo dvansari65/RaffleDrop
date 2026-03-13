@@ -9,16 +9,7 @@
   "instructions": [
     {
       "name": "buy_tickets",
-      "discriminator": [
-        48,
-        16,
-        122,
-        137,
-        24,
-        214,
-        198,
-        58
-      ],
+      "discriminator": [48, 16, 122, 137, 24, 214, 198, 58],
       "accounts": [
         {
           "name": "buyer",
@@ -40,22 +31,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119,
-                  95,
-                  112,
-                  97,
-                  121,
-                  109,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 115, 99, 114, 111, 119, 95, 112, 97, 121, 109, 101, 110, 116]
               },
               {
                 "kind": "account",
@@ -88,16 +64,7 @@
     },
     {
       "name": "create_raffle",
-      "discriminator": [
-        226,
-        206,
-        159,
-        34,
-        213,
-        207,
-        98,
-        126
-      ],
+      "discriminator": [226, 206, 159, 34, 213, 207, 98, 126],
       "accounts": [
         {
           "name": "seller",
@@ -111,57 +78,29 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
+                "value": [103, 108, 111, 98, 97, 108, 45, 99, 111, 117, 110, 116, 101, 114]
               }
             ]
           }
         },
         {
           "name": "payment_mint",
-          "docs": [
-            "Payment token mint (USDC, SOL wrapped, etc.)"
-          ]
+          "docs": ["Payment token mint (USDC, SOL wrapped, etc.)"]
         },
         {
           "name": "seller_token_account",
-          "docs": [
-            "Seller's token account"
-          ],
+          "docs": ["Seller's token account"],
           "writable": true
         },
         {
           "name": "raffle_account",
-          "docs": [
-            "Raffle PDA"
-          ],
+          "docs": ["Raffle PDA"],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  97,
-                  102,
-                  102,
-                  108,
-                  101
-                ]
+                "value": [114, 97, 102, 102, 108, 101]
               },
               {
                 "kind": "account",
@@ -177,31 +116,13 @@
         },
         {
           "name": "escrow_payment_account",
-          "docs": [
-            "Escrow token account - THE FIX IS HERE",
-            "Must be initialized AFTER raffle_account exists"
-          ],
+          "docs": ["Escrow token account - THE FIX IS HERE", "Must be initialized AFTER raffle_account exists"],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119,
-                  95,
-                  112,
-                  97,
-                  121,
-                  109,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 115, 99, 114, 111, 119, 95, 112, 97, 121, 109, 101, 110, 116]
               },
               {
                 "kind": "account",
@@ -217,9 +138,7 @@
         },
         {
           "name": "token_program",
-          "docs": [
-            "Programs"
-          ],
+          "docs": ["Programs"],
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
         {
@@ -272,16 +191,7 @@
     },
     {
       "name": "draw_winner",
-      "discriminator": [
-        250,
-        103,
-        118,
-        147,
-        219,
-        235,
-        169,
-        220
-      ],
+      "discriminator": [250, 103, 118, 147, 219, 235, 169, 220],
       "accounts": [
         {
           "name": "raffle_account",
@@ -293,9 +203,7 @@
         },
         {
           "name": "clock",
-          "docs": [
-            "The clock sysvar provides the current slot (used for randomness)"
-          ],
+          "docs": ["The clock sysvar provides the current slot (used for randomness)"],
           "address": "SysvarC1ock11111111111111111111111111111111"
         }
       ],
@@ -303,16 +211,7 @@
     },
     {
       "name": "initialise_counter",
-      "discriminator": [
-        85,
-        25,
-        135,
-        234,
-        240,
-        145,
-        129,
-        186
-      ],
+      "discriminator": [85, 25, 135, 234, 240, 145, 129, 186],
       "accounts": [
         {
           "name": "counter",
@@ -321,22 +220,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
+                "value": [103, 108, 111, 98, 97, 108, 45, 99, 111, 117, 110, 116, 101, 114]
               }
             ]
           }
@@ -355,16 +239,7 @@
     },
     {
       "name": "mark_delivered",
-      "discriminator": [
-        240,
-        118,
-        188,
-        142,
-        64,
-        85,
-        107,
-        18
-      ],
+      "discriminator": [240, 118, 188, 142, 64, 85, 107, 18],
       "accounts": [
         {
           "name": "buyer",
@@ -377,22 +252,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  97,
-                  102,
-                  102,
-                  108,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
+                "value": [114, 97, 102, 102, 108, 101, 95, 97, 99, 99, 111, 117, 110, 116]
               },
               {
                 "kind": "account",
@@ -414,22 +274,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
+                "value": [103, 108, 111, 98, 97, 108, 45, 99, 111, 117, 110, 116, 101, 114]
               }
             ]
           }
@@ -446,16 +291,7 @@
     },
     {
       "name": "mark_shipped",
-      "discriminator": [
-        239,
-        5,
-        66,
-        105,
-        238,
-        17,
-        89,
-        97
-      ],
+      "discriminator": [239, 5, 66, 105, 238, 17, 89, 97],
       "accounts": [
         {
           "name": "seller",
@@ -468,22 +304,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  114,
-                  97,
-                  102,
-                  102,
-                  108,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
+                "value": [114, 97, 102, 102, 108, 101, 95, 97, 99, 99, 111, 117, 110, 116]
               },
               {
                 "kind": "account",
@@ -505,22 +326,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  103,
-                  108,
-                  111,
-                  98,
-                  97,
-                  108,
-                  45,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116,
-                  101,
-                  114
-                ]
+                "value": [103, 108, 111, 98, 97, 108, 45, 99, 111, 117, 110, 116, 101, 114]
               }
             ]
           }
@@ -539,83 +345,29 @@
   "accounts": [
     {
       "name": "Counter",
-      "discriminator": [
-        255,
-        176,
-        4,
-        245,
-        188,
-        253,
-        124,
-        25
-      ]
+      "discriminator": [255, 176, 4, 245, 188, 253, 124, 25]
     },
     {
       "name": "RaffleAccount",
-      "discriminator": [
-        148,
-        199,
-        5,
-        56,
-        54,
-        26,
-        78,
-        102
-      ]
+      "discriminator": [148, 199, 5, 56, 54, 26, 78, 102]
     }
   ],
   "events": [
     {
       "name": "ProductDelivered",
-      "discriminator": [
-        186,
-        173,
-        91,
-        163,
-        189,
-        234,
-        114,
-        131
-      ]
+      "discriminator": [186, 173, 91, 163, 189, 234, 114, 131]
     },
     {
       "name": "ProductShipped",
-      "discriminator": [
-        91,
-        178,
-        86,
-        185,
-        155,
-        204,
-        16,
-        129
-      ]
+      "discriminator": [91, 178, 86, 185, 155, 204, 16, 129]
     },
     {
       "name": "RaffleCreated",
-      "discriminator": [
-        178,
-        172,
-        201,
-        96,
-        233,
-        171,
-        6,
-        99
-      ]
+      "discriminator": [178, 172, 201, 96, 233, 171, 6, 99]
     },
     {
       "name": "TicketsBought",
-      "discriminator": [
-        204,
-        103,
-        221,
-        60,
-        70,
-        142,
-        88,
-        233
-      ]
+      "discriminator": [204, 103, 221, 60, 70, 142, 88, 233]
     }
   ],
   "errors": [

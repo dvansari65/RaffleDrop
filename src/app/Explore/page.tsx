@@ -1,44 +1,44 @@
-"use client"
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Ticket, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react';
-import Link from 'next/link';
-import ExploreHeading from '@/components/Explore/exploring-heading';
-import { useRaffleAccount } from '@/hooks/useGetRaffleInfo';
-import { RaffleCard } from '@/components/raffle/raffle-card';
-import { RaffleCardLoaderGrid } from '@/components/raffle/loader';
-import BuyTicketModal from '@/components/modal/buy-ticket-modal';
-import { buyTicket } from '@/api/buyTicket';
-import { buyTicketProps } from '@/types/raffleType';
-import { toast } from 'sonner';
-import { PublicKey } from "@solana/web3.js"
-import { resolveIpfs } from '@/helpers/resolveIPFS';
-import { SMALLEST_TOKEN_UNIT } from '@/constants/smallest-token-unit';
-import { getRaffleStatus } from '@/helpers/getRaffleStatus';
-import { CounterInitModal } from '@/components/modal/initialise-counter';
-import { initialiseCounter } from '@/api/initialise-counter';
-import { checkCounterInfo } from '@/utils/getAccountInfo';
-import { useRaffleProgram } from '@/hooks/useRaffleProgram';
-import { useConnection } from '@solana/wallet-adapter-react';
-import { useQueryClient } from '@tanstack/react-query';
+'use client'
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Ticket, Sparkles, TrendingUp, Shield, Zap } from 'lucide-react'
+import Link from 'next/link'
+import ExploreHeading from '@/components/Explore/exploring-heading'
+import { useRaffleAccount } from '@/hooks/useGetRaffleInfo'
+import { RaffleCard } from '@/components/raffle/raffle-card'
+import { RaffleCardLoaderGrid } from '@/components/raffle/loader'
+import BuyTicketModal from '@/components/modal/buy-ticket-modal'
+import { buyTicket } from '@/api/buyTicket'
+import { buyTicketProps } from '@/types/raffleType'
+import { toast } from 'sonner'
+import { PublicKey } from '@solana/web3.js'
+import { resolveIpfs } from '@/helpers/resolveIPFS'
+import { SMALLEST_TOKEN_UNIT } from '@/constants/smallest-token-unit'
+import { getRaffleStatus } from '@/helpers/getRaffleStatus'
+import { CounterInitModal } from '@/components/modal/initialise-counter'
+import { initialiseCounter } from '@/api/initialise-counter'
+import { checkCounterInfo } from '@/utils/getAccountInfo'
+import { useRaffleProgram } from '@/hooks/useRaffleProgram'
+import { useConnection } from '@solana/wallet-adapter-react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function ExplorePage() {
-  const [activeTab, setActiveTab] = useState('active');
-  const { data, isLoading } = useRaffleAccount();
-  const [numberOfTickets, setNumberOfTickets] = useState<number | null>(null);
-  const [maxTicketsLimit, setMaxTicketsLimit] = useState<number | null>(null);  // ADD THIS
+  const [activeTab, setActiveTab] = useState('active')
+  const { data, isLoading } = useRaffleAccount()
+  const [numberOfTickets, setNumberOfTickets] = useState<number | null>(null)
+  const [maxTicketsLimit, setMaxTicketsLimit] = useState<number | null>(null) // ADD THIS
   const [ticketPrice, setTicketPrice] = useState<number | null>(null)
-  const [sellerKey, setSellerKey] = useState("")
-  const [raffleKey, setRaffleKey] = useState("")
-  const [raffleId,setRaffleId] = useState<number | null>(null)
+  const [sellerKey, setSellerKey] = useState('')
+  const [raffleKey, setRaffleKey] = useState('')
+  const [raffleId, setRaffleId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isCheckCounterInit,setIsCheckCounterInit] = useState(false)
-  const [error, setError] = useState("")
+  const [isCheckCounterInit, setIsCheckCounterInit] = useState(false)
+  const [error, setError] = useState('')
   const { mutate, isPending: buyTicketLoading, error: ticketError } = buyTicket()
   const [counterInitModal, setCounterInitModal] = useState(false)
   const { mutate: counterInit, isPending: counterInitLoading } = initialiseCounter()
-  const {program} = useRaffleProgram()
-  const {connection} = useConnection()
+  const { program } = useRaffleProgram()
+  const { connection } = useConnection()
   const queryClient = useQueryClient()
   const handleBuyTicket = () => {
     const convertedSellerKey = new PublicKey(sellerKey)
@@ -46,94 +46,98 @@ export default function ExplorePage() {
       numTickets: numberOfTickets ?? 0,
       sellerKey: convertedSellerKey,
       raffleKey: new PublicKey(raffleKey),
-      raffleId:raffleId
+      raffleId: raffleId,
     }
     mutate(payload, {
       onSuccess: (tx) => {
         if (tx) {
-          toast.success("Ticket bought successfully!")
-          queryClient.invalidateQueries({queryKey:["raffle-accounts"]})
+          toast.success('Ticket bought successfully!')
+          queryClient.invalidateQueries({ queryKey: ['raffle-accounts'] })
           setIsModalOpen(false)
         }
       },
       onError: (error) => {
-        if (error.message.includes('0xbc4') ||
+        if (
+          error.message.includes('0xbc4') ||
           error.message.includes('AccountNotInitialized') ||
-          error.message.includes('Error Number: 3012')) {
-
-          setCounterInitModal(true); // Show the modal
-          toast.error("Counter needs to be initialized first");
+          error.message.includes('Error Number: 3012')
+        ) {
+          setCounterInitModal(true) // Show the modal
+          toast.error('Counter needs to be initialized first')
         } else {
-          toast.error(error.message);
+          toast.error(error.message)
         }
-        console.log("error:", error.message)
-      }
+        console.log('error:', error.message)
+      },
     })
   }
-  const handleCounterInit = async() => {
+  const handleCounterInit = async () => {
     setIsCheckCounterInit(true)
 
     try {
-      const isCounterExist = await checkCounterInfo(program,connection)
-      if(isCounterExist){
-        toast.success("Counter already exist!")
+      const isCounterExist = await checkCounterInfo(program, connection)
+      if (isCounterExist) {
+        toast.success('Counter already exist!')
         setCounterInitModal(false)
-        return;
+        return
       }
       counterInit(undefined, {
         onSuccess: (tx) => {
           if (tx) {
-            toast.success("Counter initialise successfully!")
+            toast.success('Counter initialise successfully!')
           }
         },
         onError: (error) => {
           setError(error.message)
-          console.log("error:", error)
+          console.log('error:', error)
           toast.error(error.message)
-        }
+        },
       })
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   }
-
 
   const handleOpenModal = ({
     maxTickets,
     ticketPrice,
     raffleKey,
     sellerKey,
-    raffleId
-}: {
-    maxTickets: number | null,
-    ticketPrice: number | null,
-    raffleKey: string,
-    sellerKey: string,
+    raffleId,
+  }: {
+    maxTickets: number | null
+    ticketPrice: number | null
+    raffleKey: string
+    sellerKey: string
     raffleId: number
-}) => {
-    setError("")
+  }) => {
+    setError('')
     if (!maxTickets) {
-        setError("Max tickets not found!")
-        return;
+      setError('Max tickets not found!')
+      return
     }
     setRaffleId(raffleId)
     setSellerKey(sellerKey)
     setRaffleKey(raffleKey)
-    setMaxTicketsLimit(maxTickets);  // STORE MAX LIMIT
-    setNumberOfTickets(1);      // DEFAULT TO 1 TICKET
+    setMaxTicketsLimit(maxTickets) // STORE MAX LIMIT
+    setNumberOfTickets(1) // DEFAULT TO 1 TICKET
     setTicketPrice(ticketPrice)
     setIsModalOpen(true)
-}
+  }
   if (isLoading) {
-    return <RaffleCardLoaderGrid />;
+    return <RaffleCardLoaderGrid />
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
       {/* Atmospheric Effects */}
       <div className="fixed top-0 left-1/4 w-96 h-96 bg-red-900/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="fixed top-1/3 right-1/4 w-96 h-96 bg-amber-900/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="fixed bottom-0 left-1/2 w-96 h-96 bg-red-900/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div
+        className="fixed top-1/3 right-1/4 w-96 h-96 bg-amber-900/10 rounded-full blur-3xl animate-pulse"
+        style={{ animationDelay: '1s' }}
+      ></div>
+      <div
+        className="fixed bottom-0 left-1/2 w-96 h-96 bg-red-900/10 rounded-full blur-3xl animate-pulse"
+        style={{ animationDelay: '2s' }}
+      ></div>
 
       {/* Scanline Effect */}
       <div className="fixed inset-0 pointer-events-none opacity-5">
@@ -146,11 +150,13 @@ export default function ExplorePage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-950/50 backdrop-blur-sm rounded-full border border-red-800/50 mb-8">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-            <span className="text-sm font-bold text-red-400 uppercase tracking-wider">Transparent On-Chain Raffles</span>
+            <span className="text-sm font-bold text-red-400 uppercase tracking-wider">
+              Transparent On-Chain Raffles
+            </span>
           </div>
 
           {/* Main Heading */}
-          <ExploreHeading title1='Discover' title2='Exclusive Raffles' />
+          <ExploreHeading title1="Discover" title2="Exclusive Raffles" />
 
           {/* Subtitle */}
           <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-12">
@@ -187,23 +193,23 @@ export default function ExplorePage() {
             <div className="inline-flex items-center gap-1 p-1 bg-slate-900/50 backdrop-blur-sm rounded-xl border border-red-900/50">
               <button
                 onClick={() => setActiveTab('active')}
-                className={`px-8 py-3 rounded-lg text-sm font-bold transition-all flex items-center gap-2 uppercase tracking-wider ${activeTab === 'active'
-                  ? 'bg-red-900/50 text-white shadow-lg shadow-red-500/10 border border-red-800/50'
-                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/20'
-                  }`}
+                className={`px-8 py-3 rounded-lg text-sm font-bold transition-all flex items-center gap-2 uppercase tracking-wider ${
+                  activeTab === 'active'
+                    ? 'bg-red-900/50 text-white shadow-lg shadow-red-500/10 border border-red-800/50'
+                    : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/20'
+                }`}
               >
                 <TrendingUp className="w-4 h-4" />
                 Active Raffles
-                {activeTab === 'active' && (
-                  <span className="ml-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                )}
+                {activeTab === 'active' && <span className="ml-1 w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
               </button>
               <button
                 onClick={() => setActiveTab('finished')}
-                className={`px-8 py-3 rounded-lg text-sm font-bold transition-all flex items-center gap-2 uppercase tracking-wider ${activeTab === 'finished'
-                  ? 'bg-red-900/50 text-white shadow-lg shadow-red-500/10 border border-red-800/50'
-                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/20'
-                  }`}
+                className={`px-8 py-3 rounded-lg text-sm font-bold transition-all flex items-center gap-2 uppercase tracking-wider ${
+                  activeTab === 'finished'
+                    ? 'bg-red-900/50 text-white shadow-lg shadow-red-500/10 border border-red-800/50'
+                    : 'text-slate-400 hover:text-slate-300 hover:bg-slate-800/20'
+                }`}
               >
                 <Shield className="w-4 h-4" />
                 Finished
@@ -230,9 +236,7 @@ export default function ExplorePage() {
 
                   {/* Text */}
                   <div className="space-y-3">
-                    <h2 className="text-3xl font-bold text-white">
-                      No raffles found
-                    </h2>
+                    <h2 className="text-3xl font-bold text-white">No raffles found</h2>
                     <p className="text-slate-400 text-lg">
                       {activeTab === 'active'
                         ? 'Be the first to create an exciting raffle.'
@@ -279,32 +283,34 @@ export default function ExplorePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {data?.map((raffle) => (
                     <RaffleCard
-                    claimed = {raffle.account.claimed}
-                    winner={raffle?.account?.winner?.toString()}
-                    isSoldOut={raffle.account.isSoldOut}
-                    progress={(raffle?.account?.progress)}
-                    entries={(raffle?.account.totalEntries.toNumber())}
-                    key={raffle.publicKey.toString()}
-                    itemName={raffle.account.itemName.toString()}
-                    itemDescription={raffle?.account.itemDescription}
-                    sellingPrice={Number(raffle?.account?.sellingPrice) / SMALLEST_TOKEN_UNIT}
-                    ticketPrice={Number(raffle?.account?.ticketPrice) / SMALLEST_TOKEN_UNIT}
-                    totalCollected={Number(raffle?.account?.totalCollected)}
-                    maxTickets={raffle.account?.maxTickets}
-                    deadline={raffle.account.deadline.toNumber()}
-                    status={getRaffleStatus(raffle?.account?.status)}
-                    sellerKey={raffle.account.seller.toString()}
-                    itemImage={resolveIpfs(raffle.account.itemImageUri)}
-                    raffleKey={raffle.publicKey.toString()}
-                    raffleId={raffle.account.raffleId.toNumber()}
-                    onBuyTicket={() => handleOpenModal({
-                      maxTickets: raffle.account.maxTickets,
-                      ticketPrice: Number(raffle.account.ticketPrice),
-                      raffleKey: raffle.publicKey.toString(),
-                      sellerKey: raffle?.account?.seller.toString(),
-                      raffleId:raffle.account.raffleId.toNumber()
-                    })}
-                  />
+                      claimed={raffle.account.claimed}
+                      winner={raffle?.account?.winner?.toString()}
+                      isSoldOut={raffle.account.isSoldOut}
+                      progress={raffle?.account?.progress}
+                      entries={raffle?.account.totalEntries.toNumber()}
+                      key={raffle.publicKey.toString()}
+                      itemName={raffle.account.itemName.toString()}
+                      itemDescription={raffle?.account.itemDescription}
+                      sellingPrice={Number(raffle?.account?.sellingPrice) / SMALLEST_TOKEN_UNIT}
+                      ticketPrice={Number(raffle?.account?.ticketPrice) / SMALLEST_TOKEN_UNIT}
+                      totalCollected={Number(raffle?.account?.totalCollected)}
+                      maxTickets={raffle.account?.maxTickets}
+                      deadline={raffle.account.deadline.toNumber()}
+                      status={getRaffleStatus(raffle?.account?.status)}
+                      sellerKey={raffle.account.seller.toString()}
+                      itemImage={resolveIpfs(raffle.account.itemImageUri)}
+                      raffleKey={raffle.publicKey.toString()}
+                      raffleId={raffle.account.raffleId.toNumber()}
+                      onBuyTicket={() =>
+                        handleOpenModal({
+                          maxTickets: raffle.account.maxTickets,
+                          ticketPrice: Number(raffle.account.ticketPrice),
+                          raffleKey: raffle.publicKey.toString(),
+                          sellerKey: raffle?.account?.seller.toString(),
+                          raffleId: raffle.account.raffleId.toNumber(),
+                        })
+                      }
+                    />
                   ))}
                 </div>
               )}
@@ -312,8 +318,7 @@ export default function ExplorePage() {
           </div>
         </div>
       </section>
-      {
-        isModalOpen &&
+      {isModalOpen && (
         <BuyTicketModal
           ticketCount={numberOfTickets}
           onTicketCountChange={setNumberOfTickets}
@@ -323,20 +328,19 @@ export default function ExplorePage() {
           ticketPrice={ticketPrice}
           isLoading={buyTicketLoading}
           onBuyTickets={handleBuyTicket}
-          buyTicketError={error || ""}
+          buyTicketError={error || ''}
         />
-      }
-      {
-        counterInitModal &&
+      )}
+      {counterInitModal && (
         <CounterInitModal
           isOpen={counterInitModal}
           onClose={() => setCounterInitModal(false)}
           onProceed={handleCounterInit}
           isPending={counterInitLoading}
         />
-      }
+      )}
       {/* Bottom atmospheric effect */}
       <div className="fixed bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-30"></div>
     </div>
-  );
+  )
 }

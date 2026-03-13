@@ -1,12 +1,11 @@
-import { RaffleStatus } from "@/types/raffleType";
-
+import { RaffleStatus } from '@/types/raffleType'
 
 export const getRaffleStatus = (status: any): RaffleStatus => {
-    if (status.active) return "active";
-    if (status.drawing) return "drawing";
-    if (status.completed) return "completed";
-    if (status.cancelled) return "cancelled";
-    if (status.refunded) return "refunded";
-    if (status.ended) return "ended";
-    throw new Error("Invalid raffle status");
-  };
+  if (status.active) return 'active'
+  if (status.drawing) return 'drawing'
+  if (status.completed) return 'completed'
+  if (status.cancelled) return 'cancelled'
+  if (status.refunded) return 'refunded'
+  if (status.ended) return 'ended'
+  throw new Error('Invalid raffle status')
+}

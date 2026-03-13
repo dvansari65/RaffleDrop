@@ -1,6 +1,6 @@
-import React from "react"
-import { Sparkles, Ticket } from "lucide-react"
-import { Button } from "./button"
+import React from 'react'
+import { Sparkles, Ticket } from 'lucide-react'
+import { Button } from './button'
 
 type RaffleButtonProps = {
   onClick: () => void
@@ -13,9 +13,9 @@ type RaffleButtonProps = {
 function RaffleButton({
   onClick,
   isSoldOut = false,
-  label = "BUY TICKETS",
-  soldOutLabel = "🔒 SOLD OUT",
-  className = "",
+  label = 'BUY TICKETS',
+  soldOutLabel = '🔒 SOLD OUT',
+  className = '',
 }: RaffleButtonProps) {
   return (
     <Button
@@ -26,9 +26,10 @@ function RaffleButton({
         flex items-center justify-center gap-3
         font-semibold text-lg
         transition-all duration-200
-        ${isSoldOut
-          ? "cursor-not-allowed opacity-60 bg-slate-900 border border-slate-700 text-slate-500"
-          : `
+        ${
+          isSoldOut
+            ? 'cursor-not-allowed opacity-60 bg-slate-900 border border-slate-700 text-slate-500'
+            : `
             cursor-pointer
             bg-gradient-to-r from-red-900/40 via-red-800/40 to-amber-900/40
             border border-red-700/60

@@ -1,42 +1,40 @@
-import { Package, Users, Shuffle, Trophy } from "lucide-react";
+import { Package, Users, Shuffle, Trophy } from 'lucide-react'
 
 const steps = [
   {
     icon: Package,
-    step: "01",
-    title: "Sellers List Items",
-    description: "Premium products are listed by verified sellers with transparent pricing and raffle details.",
+    step: '01',
+    title: 'Sellers List Items',
+    description: 'Premium products are listed by verified sellers with transparent pricing and raffle details.',
   },
   {
     icon: Users,
-    step: "02",
-    title: "Buyers Enter Raffles",
-    description: "Pay a small entry fee for a chance to win. The more entries, the bigger the prize pool.",
+    step: '02',
+    title: 'Buyers Enter Raffles',
+    description: 'Pay a small entry fee for a chance to win. The more entries, the bigger the prize pool.',
   },
   {
     icon: Shuffle,
-    step: "03",
-    title: "Randomness Picks Winner",
-    description: "Switchboard VRF ensures provably fair, tamper-proof random selection on-chain.",
+    step: '03',
+    title: 'Randomness Picks Winner',
+    description: 'Switchboard VRF ensures provably fair, tamper-proof random selection on-chain.',
   },
   {
     icon: Trophy,
-    step: "04",
-    title: "Winner Gets the Product",
-    description: "One lucky winner receives the product at a fraction of retail. Seller gets paid instantly.",
+    step: '04',
+    title: 'Winner Gets the Product',
+    description: 'One lucky winner receives the product at a fraction of retail. Seller gets paid instantly.',
   },
-];
+]
 
 const HowItWorksSection = () => {
   return (
     <section id="how-it-works" className="py-32 relative">
       <div className="absolute inset-0 grid-pattern opacity-20" />
-      
+
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
-          <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-4 block">
-            How It Works
-          </span>
+          <span className="text-primary text-sm font-semibold tracking-wider uppercase mb-4 block">How It Works</span>
           <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
             Simple. Transparent. <span className="text-gradient">Fair.</span>
           </h2>
@@ -61,12 +59,8 @@ const HowItWorksSection = () => {
                 <step.icon className="w-7 h-7 text-primary" />
               </div>
 
-              <h3 className="text-xl font-display font-semibold text-foreground mb-3">
-                {step.title}
-              </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {step.description}
-              </p>
+              <h3 className="text-xl font-display font-semibold text-foreground mb-3">{step.title}</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
 
               {/* Connector Line */}
               {index < steps.length - 1 && (
@@ -77,7 +71,7 @@ const HowItWorksSection = () => {
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default HowItWorksSection;
+export default HowItWorksSection

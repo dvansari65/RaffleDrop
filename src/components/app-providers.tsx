@@ -9,13 +9,9 @@ import { SocketProvider } from '@/providers/SocketProvider'
 export function AppProviders({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ReactQueryProvider>
-    
-          <SolanaProvider>
-            <SocketProvider>
-            {children}
-            </SocketProvider>
-          </SolanaProvider>
-     
+      <SolanaProvider>
+        <SocketProvider>{children}</SocketProvider>
+      </SolanaProvider>
     </ReactQueryProvider>
   )
 }

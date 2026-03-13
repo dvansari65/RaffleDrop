@@ -17,13 +17,10 @@ export function AppLayout({
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <div className="flex flex-col min-h-screen">
         <AppHeader links={links} />
-        <main className="">
-          {children}
-        </main>
+        <main className="">{children}</main>
         <AppFooter />
       </div>
       <Toaster />
-   </ThemeProvider>
+    </ThemeProvider>
   )
 }
-
