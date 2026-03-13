@@ -10,8 +10,6 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js"
 import { useMutation } from "@tanstack/react-query"
 import { BN } from "bn.js"
-import { toast } from "sonner"
-
 
 export const CreateRaffle = () => {
     const { createTokenAccount } = useCreateAssociatedToken()
@@ -50,7 +48,7 @@ export const CreateRaffle = () => {
                     throw new Error("Counter pda not found!")
                 }
                 const counterValue = await getCounterValue()
-                console.log("Counter value:", String(counterValue))
+    
                 const sellerTokenAccount = await createTokenAccount()
                 if (!sellerTokenAccount) {
                     throw new Error("Seller token account not found!")
@@ -64,8 +62,6 @@ export const CreateRaffle = () => {
                     ],
                     program?.programId
                 )
-
-                console.log("raffleKey key:", rafflePda.toString())
 
                 if (!rafflePda) {
                     throw new Error("Raffle pda not found!")
@@ -114,13 +110,11 @@ export const CreateRaffle = () => {
                         rent: SYSVAR_RENT_PUBKEY
                     })
                     .rpc()
-                console.log("tx", tx)
                 return tx
             } catch (error: any) {
                 console.log("error:", error.message)
                 throw error
             }
-
         },
 
     })
