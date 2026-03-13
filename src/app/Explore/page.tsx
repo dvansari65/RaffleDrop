@@ -241,7 +241,7 @@ export default function ExplorePage() {
                   </div>
 
                   {/* CTA Button */}
-                  <Link href="/create">
+                  <Link href="/Create">
                     <div className="relative group">
                       <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-amber-600 to-red-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition"></div>
                       <Button
