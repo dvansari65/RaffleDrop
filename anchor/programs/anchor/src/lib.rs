@@ -1,12 +1,12 @@
 use crate::{
     error::RaffleError,
     events::{ProductDelivered, ProductShipped},
-    types::{Counter, EntropyVariable, RaffleAccount, RaffleStatus},
+    types::{Counter, RaffleAccount},
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{self, Mint, Token, TokenAccount, Transfer},
+    token::{self, Token, TokenAccount, Transfer},
 };
 use sha2::{Sha256, Digest};
 
