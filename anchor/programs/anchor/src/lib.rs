@@ -10,7 +10,7 @@ use anchor_spl::{
 };
 use sha2::{Sha256, Digest};
 
-declare_id!("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
+declare_id!("F1o3uGF7BP9tTvNXEPLFHtynamJfwpFkBAwsds1nEx8p");
 mod error;
 mod events;
 mod helpers;

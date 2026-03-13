@@ -9,7 +9,7 @@ import * as fs from "fs"
 
 dotenv.config()
 
-const keypairFile = fs.readFileSync("./randomness-keypair.json");
+const keypairFile = fs.readFileSync("./keeper-wallet.json");
 const keypair = Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(keypairFile.toString()))
 );
@@ -21,12 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const connection = new Connection("http://127.0.0.1:8899", "confirmed");
 const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
 // Derive program ID either from the IDL or fall back to Anchor.toml value.
-const programId =
-  (idl as any).address
-    ? new PublicKey((idl as any).address)
-    : new PublicKey("5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz");
-
-const program = new Program(idl as any, provider);
+const program = new Program(idl as any,provider)
 
 const server = createServer();
 const io = new Server(server, {
@@ -35,7 +30,6 @@ const io = new Server(server, {
     origin: "*"
   }
 });
-
 
 io.on("connect", async (socket) => {
   console.log("socket connected:", socket.id)
@@ -72,11 +66,20 @@ async function processRaffles() {
     // Fetch all raffle accounts; on-chain logic will re-check invariants.
     const raffles = await (program.account as any).raffleAccount.all();
     console.log(`Keeper: found ${raffles.length} raffles to inspect`);
-
+    
+    console.log("status:", raffles[1].account.status)
+    if(raffles[1].account.status > Date.now()){
+      console.log(true)
+    }
     for (const { publicKey, account } of raffles) {
       const deadline = account.deadline.toNumber();
       const status: any = account.status;
       const isDrawing = status && typeof status === "object" && "drawing" in status;
+
+      if (account.participants.length <= 0) {
+        console.log("there is no participants!");
+        return
+      }
 
       // Only act on raffles whose deadline has passed and are in Drawing state.
       if (!isDrawing) continue;
@@ -95,7 +98,9 @@ async function processRaffles() {
             clock: SYSVAR_CLOCK_PUBKEY,
           })
           .rpc();
-
+          if(tx){
+            console.log("Winner selected!")
+          }
         console.log(
           `Keeper: draw_winner succeeded for raffle ${publicKey.toBase58()}, tx=${tx}`
         );
