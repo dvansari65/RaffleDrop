@@ -59,15 +59,3 @@ pub enum RaffleStatus {
     Refunded,
     Ended
 }
-
-#[account]
-#[derive(Debug)]
-pub struct EntropyVariable {
-    pub authority: Pubkey,   // Who opened the variable
-    pub commit: [u8; 32],    // The hashed seed
-    pub slot: u64,           // The target slot for sampling
-    pub slothash: [u8; 32],  // The recorded slothash
-    pub seed: [u8; 32],      // The revealed seed
-    pub value: u64,          // The final random number (This is what you want!)
-    pub is_auto: bool,       // If the provider reveals automatically
-}
