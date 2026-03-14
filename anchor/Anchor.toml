@@ -9,16 +9,16 @@ skip-lint = false
 anchor = "F1o3uGF7BP9tTvNXEPLFHtynamJfwpFkBAwsds1nEx8p"
 
 [programs.devnet]
-anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
+anchor = "F1o3uGF7BP9tTvNXEPLFHtynamJfwpFkBAwsds1nEx8p"
 
 [programs.mainnet]
 anchor = "5CmMWJpHYhPjmhCXaaLU2WskBBB5HJ4yzDv6JzXEiDnz"
 
 [registry]
-url = "http://127.0.0.1:8899"
+url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"  
+cluster = "devnet"  
 wallet = "~/.config/solana/id.json"
 
 [scripts]
