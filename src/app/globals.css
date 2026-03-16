@@ -434,6 +434,54 @@
     height: 44px;
   }
 }
+/* ── Disable 3D transforms on mobile — GPU relief ── */
+@media (max-width: 768px) {
+  .card-3d-parent {
+    perspective: none;
+  }
+
+  .card-3d {
+    transform-style: flat;
+    box-shadow:
+      rgba(0, 0, 0, 0.6) 0px 10px 30px -10px,
+      rgba(204, 255, 0, 0.08) 0px 0px 0px 1px;
+  }
+
+  /* Flatten all 3D translated layers */
+  .card-3d-glass,
+  .card-3d-content,
+  .card-3d-bottom,
+  .card-3d-icon-circle,
+  .card-3d-logo .circle,
+  .card-3d-logo .circle1,
+  .card-3d-logo .circle2,
+  .card-3d-logo .circle3,
+  .card-3d-logo .circle4,
+  .card-3d-logo .circle5 {
+    transform: none !important;
+  }
+
+  /* Keep glass layer visible but flat */
+  .card-3d-glass {
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(10, 10, 10, 0.95) 100%);
+  }
+
+  /* No hover 3D on mobile — replace with subtle scale */
+  .card-3d-parent:hover .card-3d {
+    transform: scale(1.02);
+    box-shadow:
+      rgba(0, 0, 0, 0.6) 0px 15px 35px -10px,
+      rgba(204, 255, 0, 0.12) 0px 0px 0px 1px;
+    border-color: rgba(204, 255, 0, 0.25);
+  }
+
+  /* Keep circle5 lime badge visible */
+  .card-3d-logo .circle5 {
+    transform: none !important;
+    top: 30px;
+    right: 30px;
+  }
+}
 
 /* ── Features & FAQ Scroll-Reveal Effect ── */
 @keyframes fadeInChar {

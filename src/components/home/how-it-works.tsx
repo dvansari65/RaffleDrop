@@ -33,13 +33,10 @@ const steps = [
   },
 ]
 
-// ── Full animation variants — desktop ────────────────────────────────────
+// ── Desktop variants — full spring + slide ───────────────────────────────
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.2 } },
 }
 
 const cardVariants: Variants = {
@@ -54,43 +51,46 @@ const cardVariants: Variants = {
 
 const headerVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+}
+
+// ── Mobile variants — fade + subtle rise, no 3D ──────────────────────────
+const containerVariantsMobile: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+}
+
+const cardVariantsMobile: Variants = {
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: 'easeOut' },
+    // No rotateY, no x slide — just a clean upward fade
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
   },
 }
 
-// ── Reduced/mobile variants — simple fade only ───────────────────────────
-const containerVariantsSimple: Variants = {
+const headerVariantsMobile: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+}
+
+// ── Reduced motion — instant appear ──────────────────────────────────────
+const containerVariantsReduced: Variants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-  },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
 }
 
-const cardVariantsSimple: Variants = {
+const cardVariantsReduced: Variants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.4, ease: 'easeOut' },
-  },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
 }
 
-const headerVariantsSimple: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.4, ease: 'easeOut' },
-  },
-}
-
-// ── Memoized card ────────────────────────────────────────────────────────
-const StepCard = React.memo(function StepCard({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
+// ── Card inner JSX — shared between all three variants ───────────────────
+function CardInner({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
   const Icon = step.icon
   return (
-    <motion.div variants={cardVariants} className="relative">
+    <>
       <div className="card-3d-parent">
         <div className="card-3d">
           <div className="card-3d-glass" />
@@ -118,48 +118,43 @@ const StepCard = React.memo(function StepCard({ step, isLast }: { step: (typeof 
       {!isLast && (
         <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
       )}
+    </>
+  )
+}
+
+// ── Memoized cards — one per variant type ────────────────────────────────
+const StepCard = React.memo(function StepCard({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
+  return (
+    <motion.div variants={cardVariants} className="relative">
+      <CardInner step={step} isLast={isLast} />
     </motion.div>
   )
 })
 
-// Simple card — no 3D, no spring, just fade
-const StepCardSimple = React.memo(function StepCardSimple({
+const StepCardMobile = React.memo(function StepCardMobile({
   step,
   isLast,
 }: {
   step: (typeof steps)[0]
   isLast: boolean
 }) {
-  const Icon = step.icon
   return (
-    <motion.div variants={cardVariantsSimple} className="relative">
-      <div className="card-3d-parent">
-        <div className="card-3d">
-          <div className="card-3d-glass" />
-          <div className="card-3d-content">
-            <span className="card-3d-step">STEP {step.step}</span>
-            <h3 className="card-3d-title">{step.title}</h3>
-            <p className="card-3d-description">{step.description}</p>
-          </div>
-          <div className="card-3d-bottom">
-            <div className="card-3d-icon-circle">
-              <Icon strokeWidth={1.5} />
-            </div>
-          </div>
-          <div className="card-3d-logo">
-            <div className="circle circle1" />
-            <div className="circle circle2" />
-            <div className="circle circle3" />
-            <div className="circle circle4" />
-            <div className="circle circle5">
-              <span>{step.step}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      {!isLast && (
-        <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
-      )}
+    <motion.div variants={cardVariantsMobile} className="relative">
+      <CardInner step={step} isLast={isLast} />
+    </motion.div>
+  )
+})
+
+const StepCardReduced = React.memo(function StepCardReduced({
+  step,
+  isLast,
+}: {
+  step: (typeof steps)[0]
+  isLast: boolean
+}) {
+  return (
+    <motion.div variants={cardVariantsReduced} className="relative">
+      <CardInner step={step} isLast={isLast} />
     </motion.div>
   )
 })
@@ -170,8 +165,24 @@ export function HowItWorks() {
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
   const { isMobile, isReducedMotion } = useMobile()
 
-  // Pick variant set based on device/preference
-  const useSimple = isMobile || isReducedMotion
+  // Pick the right set of variants and card component
+  const config = isReducedMotion
+    ? {
+        container: containerVariantsReduced,
+        header: cardVariantsReduced,
+        Card: StepCardReduced,
+      }
+    : isMobile
+      ? {
+          container: containerVariantsMobile,
+          header: headerVariantsMobile,
+          Card: StepCardMobile,
+        }
+      : {
+          container: containerVariants,
+          header: headerVariants,
+          Card: StepCard,
+        }
 
   return (
     <section ref={sectionRef} id="how-it-works" className="py-16 md:py-32 relative bg-black overflow-hidden">
@@ -179,12 +190,11 @@ export function HowItWorks() {
       <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#ccff00]/5 rounded-full blur-[180px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        {/* Header */}
         <motion.div
           className="text-center mb-10 md:mb-16"
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          variants={useSimple ? headerVariantsSimple : headerVariants}
+          variants={config.header}
         >
           <span className="text-[#ccff00] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4 block">
             How It Works
@@ -197,20 +207,15 @@ export function HowItWorks() {
           </p>
         </motion.div>
 
-        {/* Cards */}
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          variants={useSimple ? containerVariantsSimple : containerVariants}
+          variants={config.container}
         >
-          {steps.map((step, index) =>
-            useSimple ? (
-              <StepCardSimple key={step.step} step={step} isLast={index === steps.length - 1} />
-            ) : (
-              <StepCard key={step.step} step={step} isLast={index === steps.length - 1} />
-            ),
-          )}
+          {steps.map((step, index) => (
+            <config.Card key={step.step} step={step} isLast={index === steps.length - 1} />
+          ))}
         </motion.div>
       </div>
     </section>
