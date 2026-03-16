@@ -1,9 +1,11 @@
 'use client'
 
-import { useRef } from 'react'
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion'
+import React, { useRef, memo } from 'react'
+import { motion, useScroll, useTransform, useSpring, type MotionValue } from 'framer-motion'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { useMobile } from '@/provider/mobile-provider'
 
+// ── Static data — module level, never recreated ──────────────────────────
 const faqs = [
   {
     question: 'How does the randomness work?',
@@ -37,89 +39,33 @@ const faqs = [
   },
 ]
 
-export function FAQ() {
-  const sectionRef = useRef<HTMLElement>(null)
+// ── Precomputed scroll ranges — calculated once at module load ───────────
+const FAQ_SCROLL_RANGES = faqs.map((_, i) => {
+  const start = 0.15 + i * 0.05
+  return { start, end: start + 0.15 }
+})
 
-  // Track scroll progress through the FAQ section
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start end', 'end start'],
-  })
-  const scale = useTransform(scrollYProgress, [0.8, 1], [1, 0.95])
-  const borderRadius = useTransform(scrollYProgress, [0.8, 1], [0, 20])
+// ── Spring config — stable object reference, never recreated ─────────────
+const SPRING_ITEM = { stiffness: 120, damping: 25 }
+const SPRING_MAIN = { stiffness: 100, damping: 30 }
 
-  // FAQ rises from below as user scrolls
-  const y = useTransform(scrollYProgress, [0, 0.3], [200, 0])
-  const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1])
-
-  // Smooth spring physics
-  const smoothY = useSpring(y, { stiffness: 100, damping: 30 })
-  const smoothOpacity = useSpring(opacity, { stiffness: 100, damping: 30 })
-
-  // Header animations based on scroll
-  const headerY = useTransform(scrollYProgress, [0.1, 0.3], [50, 0])
-  const headerOpacity = useTransform(scrollYProgress, [0.1, 0.25], [0, 1])
-
-  return (
-    <section ref={sectionRef} id="faq" className="relative bg-black min-h-screen py-16 md:py-32 overflow-hidden ">
-      <div className="absolute inset-0 grid-pattern opacity-10" />
-      <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] bg-[#ccff00]/5 rounded-full blur-[150px] pointer-events-none hidden md:block" />
-
-      {/* Animated Content - Rises from below */}
-
-      <motion.div
-        className="container mx-auto px-4 sm:px-6 relative z-10"
-        style={{ y: smoothY, opacity: smoothOpacity }}
-      >
-        {/* Header */}
-        <motion.div className="container mx-auto px-4 sm:px-6" style={{ y: smoothY, opacity: smoothOpacity }}>
-          <motion.div className="text-center mb-10 md:mb-16" style={{ y: headerY, opacity: headerOpacity }}>
-            <span className="text-[#ccff00] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4 block">
-              FAQ
-            </span>
-
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
-              Got <span className="text-gradient-brand">Questions?</span>
-            </h2>
-
-            <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
-              Everything you need to know about RaffleDrop
-            </p>
-          </motion.div>
-        </motion.div>
-
-        {/* FAQ Items - Staggered left-to-right entrance */}
-        <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-3 md:space-y-4">
-            {faqs.map((faq, index) => (
-              <FAQItem key={index} faq={faq} index={index} scrollYProgress={scrollYProgress} />
-            ))}
-          </Accordion>
-        </div>
-      </motion.div>
-    </section>
-  )
-}
-
-// Individual FAQ item with scroll-linked animation
-function FAQItem({
+// ── FAQItem — memo prevents re-render when parent scroll state changes ───
+const FAQItem = memo(function FAQItem({
   faq,
   index,
   scrollYProgress,
 }: {
   faq: { question: string; answer: string }
   index: number
-  scrollYProgress: any
+  scrollYProgress: MotionValue<number>
 }) {
-  // Each item slides in from left at different scroll points
-  const start = 0.15 + index * 0.05
-  const end = start + 0.15
+  const { start, end } = FAQ_SCROLL_RANGES[index]
 
   const x = useTransform(scrollYProgress, [start, end], [-60, 0])
   const opacity = useTransform(scrollYProgress, [start, end], [0, 1])
 
-  const smoothX = useSpring(x, { stiffness: 120, damping: 25 })
-  const smoothOpacity = useSpring(opacity, { stiffness: 120, damping: 25 })
+  const smoothX = useSpring(x, SPRING_ITEM)
+  const smoothOpacity = useSpring(opacity, SPRING_ITEM)
 
   return (
     <motion.div style={{ x: smoothX, opacity: smoothOpacity }}>
@@ -135,5 +81,62 @@ function FAQItem({
         </AccordionContent>
       </AccordionItem>
     </motion.div>
+  )
+})
+
+// ── Main component ───────────────────────────────────────────────────────
+export function FAQ() {
+  const { isMobile, isReducedMotion } = useMobile()
+  const sectionRef = useRef<HTMLElement>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  })
+
+  // On mobile/reduced motion — skip spring physics entirely
+  const y = useTransform(scrollYProgress, [0, 0.3], [isReducedMotion ? 0 : 200, 0])
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1])
+
+  const smoothY = useSpring(y, isMobile ? { stiffness: 200, damping: 40 } : SPRING_MAIN)
+  const smoothOpacity = useSpring(opacity, SPRING_MAIN)
+  // Header parallax
+  const headerY = useTransform(scrollYProgress, [0.1, 0.3], [50, 0])
+  const headerOpacity = useTransform(scrollYProgress, [0.1, 0.25], [0, 1])
+
+  return (
+    <section ref={sectionRef} id="faq" className="relative bg-black min-h-screen py-16 md:py-32 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 grid-pattern opacity-10" />
+      <div className="absolute bottom-0 left-1/4 w-[300px] h-[300px] bg-[#ccff00]/5 rounded-full blur-[150px] pointer-events-none hidden md:block" />
+
+      {/* Outer rise animation */}
+      <motion.div
+        className="container mx-auto px-4 sm:px-6 relative z-10"
+        style={{ y: smoothY, opacity: smoothOpacity }}
+      >
+        {/* Header parallax */}
+        <motion.div className="text-center mb-10 md:mb-16" style={{ y: headerY, opacity: headerOpacity }}>
+          <span className="text-[#ccff00] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4 block">
+            FAQ
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
+            Got <span className="text-gradient-brand">Questions?</span>
+          </h2>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
+            Everything you need to know about RaffleDrop
+          </p>
+        </motion.div>
+
+        {/* FAQ list */}
+        <div className="max-w-3xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-3 md:space-y-4">
+            {faqs.map((faq, index) => (
+              <FAQItem key={faq.question} faq={faq} index={index} scrollYProgress={scrollYProgress} />
+            ))}
+          </Accordion>
+        </div>
+      </motion.div>
+    </section>
   )
 }

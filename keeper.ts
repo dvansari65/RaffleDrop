@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY } from '@solana/web3.js'
+import { Connection, Keypair, SYSVAR_CLOCK_PUBKEY } from '@solana/web3.js'
 import { fileURLToPath } from 'url'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
@@ -9,14 +9,18 @@ import * as fs from 'fs'
 
 dotenv.config()
 
-const keypairFile = fs.readFileSync('./keeper-wallet.json')
-const keypair = Keypair.fromSecretKey(new Uint8Array(JSON.parse(keypairFile.toString())))
+const keypairData = process.env.KEEPER_KEYPAIR
+  ? JSON.parse(process.env.KEEPER_KEYPAIR)
+  : JSON.parse(fs.readFileSync('./keeper-wallet.json').toString())
+
+const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData))
 const wallet = new Wallet(keypair)
 
 // Handle __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url)
 
-const connection = new Connection('http://127.0.0.1:8899', 'confirmed')
+const connection = new Connection(process.env.RPC_URL || '', 'confirmed')
+
 const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' })
 // Derive program ID either from the IDL or fall back to Anchor.toml value.
 const program = new Program(idl as any, provider)

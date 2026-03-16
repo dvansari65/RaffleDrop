@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useAnimation, AnimatePresence } from 'framer-motion'
-import { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { ArrowRight } from 'lucide-react'
 
 // ── Configuration ───────────────────────────────────────────────────────────
@@ -31,7 +31,11 @@ interface FallingLetterProps {
   isGradient?: boolean
 }
 
-function FallingLetter({ cfg, className = '', isGradient = false }: FallingLetterProps) {
+const FallingLetter = React.memo(function FallingLetter({
+  cfg,
+  className = '',
+  isGradient = false,
+}: FallingLetterProps) {
   const controls = useAnimation()
   const hasLanded = useRef(false)
 
@@ -70,7 +74,7 @@ function FallingLetter({ cfg, className = '', isGradient = false }: FallingLette
       {cfg.char === ' ' ? '\u00A0' : cfg.char}
     </motion.span>
   )
-}
+})
 
 // ── Falling Text ────────────────────────────────────────────────────────────
 interface FallingTextProps {
@@ -81,28 +85,25 @@ interface FallingTextProps {
 }
 
 function FallingText({ text, className = '', isGradient = false, baseDelay = 0 }: FallingTextProps) {
-  const [configs, setConfigs] = useState<LetterConfig[]>([])
+  // useRef instead of useState — configs never need to trigger a re-render
+  const configsRef = useRef<LetterConfig[]>([])
 
-  useEffect(() => {
-    setConfigs(
-      text.split('').map((char, i) => ({
-        char,
-        delay: baseDelay + i * 0.03,
-        fromY: -80 - Math.random() * 40,
-        fromX: (Math.random() - 0.5) * 20,
-        fromRotate: (Math.random() - 0.5) * 15,
-        mass: 0.8 + Math.random() * 0.3,
-        stiffness: 100 + Math.random() * 20,
-        damping: 14 + Math.random() * 4,
-      })),
-    )
-  }, [text, baseDelay])
-
-  if (configs.length === 0) return null
+  if (configsRef.current.length === 0) {
+    configsRef.current = text.split('').map((char, i) => ({
+      char,
+      delay: baseDelay + i * 0.03,
+      fromY: -80 - Math.random() * 40,
+      fromX: (Math.random() - 0.5) * 20,
+      fromRotate: (Math.random() - 0.5) * 15,
+      mass: 0.8 + Math.random() * 0.3,
+      stiffness: 100 + Math.random() * 20,
+      damping: 14 + Math.random() * 4,
+    }))
+  }
 
   return (
     <span className={`inline-flex flex-wrap ${className}`}>
-      {configs.map((cfg, i) => (
+      {configsRef.current.map((cfg, i) => (
         <FallingLetter key={i} cfg={cfg} isGradient={isGradient} className={!isGradient ? 'text-white' : ''} />
       ))}
     </span>

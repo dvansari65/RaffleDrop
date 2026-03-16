@@ -436,6 +436,24 @@
 }
 
 /* ── Features & FAQ Scroll-Reveal Effect ── */
+@keyframes fadeInChar {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.typing-text {
+  opacity: 1;
+}
+
+.typing-text .char {
+  opacity: 0;
+  display: inline;
+  animation: fadeInChar 0.05s linear forwards;
+}
 
 /* Features section - needs to be above FAQ */
 .features-section {

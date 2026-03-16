@@ -46,7 +46,6 @@ describe('raffle', () => {
   before(async () => {
     buyer = Keypair.generate()
     seller = payer.publicKey
-
     ;[counterPda] = web3.PublicKey.findProgramAddressSync([Buffer.from('global-counter')], program.programId)
 
     // Create mint with payer as authority
@@ -97,12 +96,10 @@ describe('raffle', () => {
     const accountInfo = await program.account.counter.fetch(counterPda)
     const counterBuffer = Buffer.alloc(8)
     counterBuffer.writeBigUInt64LE(BigInt(accountInfo.counter.toNumber()))
-
     ;[rafflePda] = web3.PublicKey.findProgramAddressSync(
       [Buffer.from('raffle'), seller.toBuffer(), counterBuffer],
       program.programId,
     )
-
     ;[escrowPaymentAccountPda] = web3.PublicKey.findProgramAddressSync(
       [Buffer.from('escrow_payment'), seller.toBuffer(), counterBuffer],
       program.programId,

@@ -1,9 +1,11 @@
 'use client'
 
-import { motion, useInView, Variants } from 'framer-motion'
-import { useRef } from 'react'
+import React, { useRef } from 'react'
+import { motion, useInView, type Variants } from 'framer-motion'
 import { Package, Users, Shuffle, Trophy } from 'lucide-react'
+import { useMobile } from '@/provider/mobile-provider'
 
+// ── Static data ──────────────────────────────────────────────────────────
 const steps = [
   {
     icon: Package,
@@ -31,60 +33,149 @@ const steps = [
   },
 ]
 
-// Animation variants for container
+// ── Full animation variants — desktop ────────────────────────────────────
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
+    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
   },
 }
 
-// Animation variants for each card - sliding from left
 const cardVariants: Variants = {
-  hidden: {
-    opacity: 0,
-    x: -100,
-    rotateY: -15,
-  },
+  hidden: { opacity: 0, x: -100, rotateY: -15 },
   visible: {
     opacity: 1,
     x: 0,
     rotateY: 0,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 20,
-    },
+    transition: { type: 'spring', stiffness: 100, damping: 20 },
   },
 }
 
-// Header animation variants - fixed ease type
 const headerVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.6,
-      ease: 'easeOut', // Changed from array to string
-    },
+    transition: { duration: 0.6, ease: 'easeOut' },
   },
 }
 
+// ── Reduced/mobile variants — simple fade only ───────────────────────────
+const containerVariantsSimple: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+}
+
+const cardVariantsSimple: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+}
+
+const headerVariantsSimple: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.4, ease: 'easeOut' },
+  },
+}
+
+// ── Memoized card ────────────────────────────────────────────────────────
+const StepCard = React.memo(function StepCard({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
+  const Icon = step.icon
+  return (
+    <motion.div variants={cardVariants} className="relative">
+      <div className="card-3d-parent">
+        <div className="card-3d">
+          <div className="card-3d-glass" />
+          <div className="card-3d-content">
+            <span className="card-3d-step">STEP {step.step}</span>
+            <h3 className="card-3d-title">{step.title}</h3>
+            <p className="card-3d-description">{step.description}</p>
+          </div>
+          <div className="card-3d-bottom">
+            <div className="card-3d-icon-circle">
+              <Icon strokeWidth={1.5} />
+            </div>
+          </div>
+          <div className="card-3d-logo">
+            <div className="circle circle1" />
+            <div className="circle circle2" />
+            <div className="circle circle3" />
+            <div className="circle circle4" />
+            <div className="circle circle5">
+              <span>{step.step}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {!isLast && (
+        <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
+      )}
+    </motion.div>
+  )
+})
+
+// Simple card — no 3D, no spring, just fade
+const StepCardSimple = React.memo(function StepCardSimple({
+  step,
+  isLast,
+}: {
+  step: (typeof steps)[0]
+  isLast: boolean
+}) {
+  const Icon = step.icon
+  return (
+    <motion.div variants={cardVariantsSimple} className="relative">
+      <div className="card-3d-parent">
+        <div className="card-3d">
+          <div className="card-3d-glass" />
+          <div className="card-3d-content">
+            <span className="card-3d-step">STEP {step.step}</span>
+            <h3 className="card-3d-title">{step.title}</h3>
+            <p className="card-3d-description">{step.description}</p>
+          </div>
+          <div className="card-3d-bottom">
+            <div className="card-3d-icon-circle">
+              <Icon strokeWidth={1.5} />
+            </div>
+          </div>
+          <div className="card-3d-logo">
+            <div className="circle circle1" />
+            <div className="circle circle2" />
+            <div className="circle circle3" />
+            <div className="circle circle4" />
+            <div className="circle circle5">
+              <span>{step.step}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {!isLast && (
+        <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
+      )}
+    </motion.div>
+  )
+})
+
+// ── Main component ───────────────────────────────────────────────────────
 export function HowItWorks() {
   const sectionRef = useRef(null)
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' })
+  const { isMobile, isReducedMotion } = useMobile()
+
+  // Pick variant set based on device/preference
+  const useSimple = isMobile || isReducedMotion
 
   return (
     <section ref={sectionRef} id="how-it-works" className="py-16 md:py-32 relative bg-black overflow-hidden">
-      {/* Static grid pattern */}
       <div className="absolute inset-0 grid-pattern opacity-20" />
-
-      {/* Subtle lime glow top-left */}
       <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#ccff00]/5 rounded-full blur-[180px] pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
@@ -93,81 +184,33 @@ export function HowItWorks() {
           className="text-center mb-10 md:mb-16"
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          variants={headerVariants}
+          variants={useSimple ? headerVariantsSimple : headerVariants}
         >
-          <motion.span
-            variants={headerVariants}
-            className="text-[#ccff00] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4 block"
-          >
+          <span className="text-[#ccff00] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4 block">
             How It Works
-          </motion.span>
-
-          <motion.h2
-            variants={headerVariants}
-            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
-          >
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
             Simple. Transparent. <span className="text-gradient-brand">Fair.</span>
-          </motion.h2>
-
-          <motion.p
-            variants={headerVariants}
-            className="text-gray-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2"
-          >
+          </h2>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-2">
             Four simple steps to winning premium products at unbeatable prices
-          </motion.p>
+          </p>
         </motion.div>
 
-        {/* Cards Grid with staggered left slide-in */}
+        {/* Cards */}
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
-          variants={containerVariants}
+          variants={useSimple ? containerVariantsSimple : containerVariants}
         >
-          {steps.map((step, index) => {
-            const Icon = step.icon
-
-            return (
-              <motion.div key={step.step} variants={cardVariants} className="relative">
-                <div className="card-3d-parent">
-                  <div className="card-3d">
-                    {/* Glass overlay */}
-                    <div className="card-3d-glass" />
-
-                    {/* Content */}
-                    <div className="card-3d-content">
-                      <span className="card-3d-step">STEP {step.step}</span>
-                      <h3 className="card-3d-title">{step.title}</h3>
-                      <p className="card-3d-description">{step.description}</p>
-                    </div>
-
-                    {/* Bottom section with icon */}
-                    <div className="card-3d-bottom">
-                      <div className="card-3d-icon-circle">
-                        <Icon strokeWidth={1.5} />
-                      </div>
-                    </div>
-
-                    {/* Decorative circles (logo area) */}
-                    <div className="card-3d-logo">
-                      <div className="circle circle1" />
-                      <div className="circle circle2" />
-                      <div className="circle circle3" />
-                      <div className="circle circle4" />
-                      <div className="circle circle5">
-                        <span>{step.step}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Connector line between cards (desktop only) */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
-                )}
-              </motion.div>
-            )
-          })}
+          {steps.map((step, index) =>
+            useSimple ? (
+              <StepCardSimple key={step.step} step={step} isLast={index === steps.length - 1} />
+            ) : (
+              <StepCard key={step.step} step={step} isLast={index === steps.length - 1} />
+            ),
+          )}
         </motion.div>
       </div>
     </section>
