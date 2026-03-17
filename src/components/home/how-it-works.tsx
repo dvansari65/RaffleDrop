@@ -87,78 +87,112 @@ const cardVariantsReduced: Variants = {
 }
 
 // ── Card inner JSX — shared between all three variants ───────────────────
-function CardInner({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
-  const Icon = step.icon
-  return (
-    <>
-      <div className="card-3d-parent">
-        <div className="card-3d">
-          <div className="card-3d-glass" />
-          <div className="card-3d-content">
-            <span className="card-3d-step">STEP {step.step}</span>
-            <h3 className="card-3d-title">{step.title}</h3>
-            <p className="card-3d-description">{step.description}</p>
-          </div>
-          <div className="card-3d-bottom">
-            <div className="card-3d-icon-circle">
-              <Icon strokeWidth={1.5} />
+function CardInner({ step, isLast, isMobile }: { 
+    step: (typeof steps)[0]
+    isLast: boolean
+    isMobile: boolean 
+  }) {
+    const Icon = step.icon
+  
+    if (isMobile) {
+      return (
+        <>
+          <div className="relative p-5 rounded-2xl bg-[#0a0a0a] border border-[#ccff00]/10 hover:border-[#ccff00]/25 transition-colors duration-300">
+            {/* Top row — icon + step number */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#ccff00]/10 border border-[#ccff00]/20 flex items-center justify-center">
+                <Icon className="w-5 h-5 text-[#ccff00]" strokeWidth={1.5} />
+              </div>
+              <span className="text-[#ccff00] text-xs font-bold tracking-widest opacity-60">
+                {step.step}
+              </span>
             </div>
+  
+            {/* Text */}
+            <h3 className="text-white font-bold text-base mb-2 leading-snug">
+              {step.title}
+            </h3>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {step.description}
+            </p>
+  
+            {/* Bottom lime accent line */}
+            <div className="mt-4 h-px w-1/3 bg-gradient-to-r from-[#ccff00]/40 to-transparent" />
           </div>
-          <div className="card-3d-logo">
-            <div className="circle circle1" />
-            <div className="circle circle2" />
-            <div className="circle circle3" />
-            <div className="circle circle4" />
-            <div className="circle circle5">
-              <span>{step.step}</span>
+  
+          {/* Connector — vertical on mobile between cards */}
+          {!isLast && (
+            <div className="flex justify-center my-1 lg:hidden">
+              <div className="w-px h-4 bg-gradient-to-b from-[#ccff00]/20 to-transparent" />
+            </div>
+          )}
+        </>
+      )
+    }
+  
+    // Desktop — existing 3D card unchanged
+    return (
+      <>
+        <div className="card-3d-parent">
+          <div className="card-3d">
+            <div className="card-3d-glass" />
+            <div className="card-3d-content">
+              <span className="card-3d-step">STEP {step.step}</span>
+              <h3 className="card-3d-title">{step.title}</h3>
+              <p className="card-3d-description">{step.description}</p>
+            </div>
+            <div className="card-3d-bottom">
+              <div className="card-3d-icon-circle">
+                <Icon strokeWidth={1.5} />
+              </div>
+            </div>
+            <div className="card-3d-logo">
+              <div className="circle circle1" />
+              <div className="circle circle2" />
+              <div className="circle circle3" />
+              <div className="circle circle4" />
+              <div className="circle circle5"><span>{step.step}</span></div>
             </div>
           </div>
         </div>
-      </div>
-      {!isLast && (
-        <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
-      )}
-    </>
-  )
-}
+        {!isLast && (
+          <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-gradient-to-r from-[#ccff00]/30 to-transparent" />
+        )}
+      </>
+    )
+  }
 
 // ── Memoized cards — one per variant type ────────────────────────────────
-const StepCard = React.memo(function StepCard({ step, isLast }: { step: (typeof steps)[0]; isLast: boolean }) {
-  return (
-    <motion.div variants={cardVariants} className="relative">
-      <CardInner step={step} isLast={isLast} />
-    </motion.div>
-  )
-})
-
 const StepCardMobile = React.memo(function StepCardMobile({
-  step,
-  isLast,
-}: {
-  step: (typeof steps)[0]
-  isLast: boolean
-}) {
-  return (
-    <motion.div variants={cardVariantsMobile} className="relative">
-      <CardInner step={step} isLast={isLast} />
-    </motion.div>
-  )
-})
-
-const StepCardReduced = React.memo(function StepCardReduced({
-  step,
-  isLast,
-}: {
-  step: (typeof steps)[0]
-  isLast: boolean
-}) {
-  return (
-    <motion.div variants={cardVariantsReduced} className="relative">
-      <CardInner step={step} isLast={isLast} />
-    </motion.div>
-  )
-})
-
+    step, isLast,
+  }: { step: (typeof steps)[0]; isLast: boolean }) {
+    return (
+      <motion.div variants={cardVariantsMobile} className="relative">
+        <CardInner step={step} isLast={isLast} isMobile={true} />
+      </motion.div>
+    )
+  })
+  
+  // Desktop and reduced cards pass isMobile={false}
+  const StepCard = React.memo(function StepCard({
+    step, isLast,
+  }: { step: (typeof steps)[0]; isLast: boolean }) {
+    return (
+      <motion.div variants={cardVariants} className="relative">
+        <CardInner step={step} isLast={isLast} isMobile={false} />
+      </motion.div>
+    )
+  })
+  
+  const StepCardReduced = React.memo(function StepCardReduced({
+    step, isLast,
+  }: { step: (typeof steps)[0]; isLast: boolean }) {
+    return (
+      <motion.div variants={cardVariantsReduced} className="relative">
+        <CardInner step={step} isLast={isLast} isMobile={false} />
+      </motion.div>
+    )
+  })
 // ── Main component ───────────────────────────────────────────────────────
 export function HowItWorks() {
   const sectionRef = useRef(null)
