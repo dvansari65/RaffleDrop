@@ -204,7 +204,8 @@ export default function Hero() {
           </motion.p>
 
           {/* CTA Buttons */}
-          <motion.div
+          <motion.a
+            href={"/Explore"}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4, duration: 0.6 }}
@@ -218,7 +219,7 @@ export default function Hero() {
             </MagneticButton>
 
             <MagneticButton variant="secondary">View Documentation</MagneticButton>
-          </motion.div>
+          </motion.a>
 
           {/* Stats Row */}
           <motion.div
