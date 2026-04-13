@@ -8,7 +8,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Token, TokenAccount, Transfer},
 };
-use sha2::{Sha256, Digest};
+use switchboard_on_demand::accounts::RandomnessAccountData;
 
 declare_id!("F1o3uGF7BP9tTvNXEPLFHtynamJfwpFkBAwsds1nEx8p");
 mod error;
@@ -85,13 +85,20 @@ pub mod Raffle {
         raffle.participants = Vec::new();
         raffle.total_collected = 0;
         raffle.status = RaffleStatus::Active;
+        raffle.randomness_account = None;
+        raffle.randomness_commit_slot = None;
         raffle.winner = None;
         raffle.claimed = false;
         raffle.bump = ctx.bumps.raffle_account;
         raffle.escrow_bump = ctx.bumps.escrow_payment_account;
         raffle.is_sold_out = false;
         raffle.total_entries = 0;
+        raffle.progress = 0;
         raffle.raffle_id = raffle_id;
+        raffle.product_delivered_status = types::DeliveryStatus::Pending;
+        raffle.tracking_info = None;
+        raffle.shipped_at = None;
+        raffle.despute_deadline = None;
         counter.counter = counter
             .counter
             .checked_add(1)
@@ -212,55 +219,112 @@ pub mod Raffle {
         Ok(())
     }
    
-    pub fn draw_winner(ctx: Context<DrawWinner>) -> Result<()> {
+    pub fn request_draw(ctx: Context<RequestDraw>) -> Result<()> {
         let raffle = &mut ctx.accounts.raffle_account;
-        let current_timestamp = get_unix_timestamp() as u64;
-        
-        // Checks
+        let clock = Clock::get()?;
+
         require!(
-            current_timestamp > raffle.deadline as u64,
+            clock.unix_timestamp > raffle.deadline,
             RaffleError::DeadlineNotReached
         );
-        require!(
-            !raffle.claimed,
-            RaffleError::WinnerAlreadySelected
-        );
+        require!(!raffle.claimed, RaffleError::WinnerAlreadySelected);
         require!(
             raffle.status == RaffleStatus::Drawing,
             RaffleError::InvalidRaffleState
         );
+        require!(!raffle.participants.is_empty(), RaffleError::NoParticipants);
         require!(
-            !raffle.participants.is_empty(),
-            RaffleError::NoParticipants
+            raffle.randomness_account.is_none(),
+            RaffleError::RandomnessAlreadyRequested
         );
-    
-        // Get the current slot from clock sysvar
-        let slot = ctx.accounts.clock.slot;
-        
-        // Create SHA-256 hash of the slot
-        let mut hasher = Sha256::new();
-        hasher.update(slot.to_be_bytes());
-        let hash = hasher.finalize();
-        
-        // Convert first 8 bytes of hash to u64
-        let random_number = u64::from_be_bytes(
-            hash[..8].try_into().unwrap()
+
+        let randomness_data = RandomnessAccountData::parse(
+            ctx.accounts.randomness_account_data.data.borrow(),
+        )
+        .map_err(|_| RaffleError::InvalidRandomnessAccount)?;
+
+        require!(
+            randomness_data.seed_slot == clock.slot.saturating_sub(1),
+            RaffleError::RandomnessExpired
         );
-        
-        // Calculate winner index using modulo
+        require!(
+            randomness_data.get_value(clock.slot).is_err(),
+            RaffleError::RandomnessAlreadyRevealed
+        );
+
+        raffle.randomness_account = Some(ctx.accounts.randomness_account_data.key());
+        raffle.randomness_commit_slot = Some(randomness_data.seed_slot);
+
+        msg!(
+            "Switchboard randomness committed for raffle {} at slot {}",
+            raffle.key(),
+            randomness_data.seed_slot
+        );
+
+        Ok(())
+    }
+
+    pub fn draw_winner(ctx: Context<DrawWinner>) -> Result<()> {
+        let raffle = &mut ctx.accounts.raffle_account;
+        let clock = Clock::get()?;
+        let current_timestamp = get_unix_timestamp() as u64;
+
+        require!(
+            current_timestamp > raffle.deadline as u64,
+            RaffleError::DeadlineNotReached
+        );
+        require!(!raffle.claimed, RaffleError::WinnerAlreadySelected);
+        require!(
+            raffle.status == RaffleStatus::Drawing,
+            RaffleError::InvalidRaffleState
+        );
+        require!(!raffle.participants.is_empty(), RaffleError::NoParticipants);
+
+        let stored_randomness_account = raffle
+            .randomness_account
+            .ok_or(RaffleError::RandomnessNotRequested)?;
+        let stored_commit_slot = raffle
+            .randomness_commit_slot
+            .ok_or(RaffleError::RandomnessNotRequested)?;
+
+        require!(
+            ctx.accounts.randomness_account_data.key() == stored_randomness_account,
+            RaffleError::InvalidRandomnessAccount
+        );
+
+        let randomness_data = RandomnessAccountData::parse(
+            ctx.accounts.randomness_account_data.data.borrow(),
+        )
+        .map_err(|_| RaffleError::InvalidRandomnessAccount)?;
+
+        require!(
+            randomness_data.seed_slot == stored_commit_slot,
+            RaffleError::RandomnessExpired
+        );
+
+        let random_bytes = randomness_data
+            .get_value(clock.slot)
+            .map_err(|_| RaffleError::RandomnessNotResolved)?;
+        let random_number = u64::from_le_bytes(
+            random_bytes[..8]
+                .try_into()
+                .map_err(|_| RaffleError::InvalidRandomnessAccount)?,
+        );
         let winner_index = (random_number % raffle.participants.len() as u64) as usize;
         let winner = raffle.participants[winner_index];
-    
-        // Update raffle state
+
         raffle.winner = Some(winner);
         raffle.claimed = true;
         raffle.status = RaffleStatus::Completed;
-        
-        msg!("Slot used for randomness: {}", slot);
-        msg!("Random number generated: {}", random_number);
+
+        msg!(
+            "Switchboard randomness resolved for raffle {} with seed slot {}",
+            raffle.key(),
+            randomness_data.seed_slot
+        );
         msg!("Winner index: {}", winner_index);
         msg!("Winner public key: {}", winner);
-    
+
         Ok(())
     }
 
@@ -387,14 +451,23 @@ pub struct BuyTickets<'info> {
     pub system_program: Program<'info, System>,
 }
 #[derive(Accounts)]
+pub struct RequestDraw<'info> {
+    #[account(mut)]
+    pub raffle_account: Account<'info, RaffleAccount>,
+
+    /// CHECK: Parsed and validated as a Switchboard randomness account in the handler.
+    pub randomness_account_data: AccountInfo<'info>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
 pub struct DrawWinner<'info> {
     #[account(mut)]
     pub raffle_account: Account<'info, RaffleAccount>,
-    
-    pub signer: Signer<'info>,
-    
-    /// The clock sysvar provides the current slot (used for randomness)
-    pub clock: Sysvar<'info, Clock>,
+
+    /// CHECK: Must match the stored Switchboard randomness account and deserialize successfully.
+    pub randomness_account_data: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
