@@ -24,6 +24,7 @@ custom-panic = []
 anchor-lang = "0.32.1"
 anchor-spl = "0.32.1"
 sha2 = "0.10.9"
+switchboard-on-demand = { version = "0.10.0", features = ["anchor"] }
 
 
 
