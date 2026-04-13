@@ -59,5 +59,9 @@ pub enum RaffleError {
     #[msg("Randomness not resolved!")]
     RandomnessNotResolved,
     #[msg("Winner already selected!")]
-    WinnerAlreadySelected
+    WinnerAlreadySelected,
+    #[msg("Randomness already requested!")]
+    RandomnessAlreadyRequested,
+    #[msg("Randomness has not been requested yet!")]
+    RandomnessNotRequested
 }
