@@ -24,6 +24,8 @@ pub struct RaffleAccount {
     pub participants: Vec<Pubkey>,
     pub total_collected: u64,
     pub status: RaffleStatus,
+    pub randomness_account: Option<Pubkey>,
+    pub randomness_commit_slot: Option<u64>,
     pub winner: Option<Pubkey>,
     pub claimed: bool,
     pub bump: u8,
