@@ -1,5 +1,4 @@
 import { useCreateAssociatedToken } from '@/hooks/useCreateATA'
-import { useGetCounterPda } from '@/hooks/useGetCounterPda'
 import { useRaffleProgram } from '@/hooks/useRaffleProgram'
 import { buyTicketProps } from '@/types/raffleType'
 import { AnchorError, BN } from '@coral-xyz/anchor'
@@ -36,14 +35,18 @@ export const buyTicket = () => {
         if (!sellerKey) {
           throw new Error('Seller key not found!')
         }
-        if (!raffleId) {
+        if (raffleId === null || raffleId === undefined) {
           throw new Error('Raffle id not found!')
         }
-        console.log('raffle id:', raffleId)
+
         const [escrowPaymentAccount] = PublicKey.findProgramAddressSync(
           [Buffer.from('escrow_payment'), sellerKey.toBuffer(), new BN(raffleId).toArrayLike(Buffer, 'le', 8)],
           program.programId,
         )
+
+        if (!raffleKey) {
+          throw new Error('Raffle key not found!')
+        }
 
         const tx = await (program.methods as any)
           .buyTickets(numTickets)
@@ -98,7 +101,7 @@ export const buyTicket = () => {
         if (error instanceof AnchorError) {
           throw new Error(error.error.errorMessage)
         }
-        if (error.logs) {
+        if (error?.logs) {
           error.logs.forEach((log: any) => console.error('     ', log))
         }
         throw error
