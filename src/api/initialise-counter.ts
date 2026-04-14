@@ -1,12 +1,12 @@
-import { useGetCounterPda } from '@/hooks/useGetCounterPda'
 import { useRaffleProgram } from '@/hooks/useRaffleProgram'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { useMutation } from '@tanstack/react-query'
 import { SystemProgram, PublicKey } from '@solana/web3.js'
+
 export const initialiseCounter = () => {
   const { program } = useRaffleProgram()
-
   const { publicKey } = useWallet()
+
   return useMutation({
     mutationKey: ['counter-init'],
     mutationFn: async () => {
@@ -14,11 +14,15 @@ export const initialiseCounter = () => {
         if (!publicKey) {
           throw new Error('Wallet not connected!')
         }
-        // Derive PDA inside the mutation function when we know values exist
+        if (!program?.programId) {
+          throw new Error('Program not found!')
+        }
+
         const [counterPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('global-counter')], // Check your Rust program for exact seeds
+          [Buffer.from('global-counter')],
           program.programId,
         )
+
         const tx = await (program.methods as any)
           .initialiseCounter()
           .accounts({
