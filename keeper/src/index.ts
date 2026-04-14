@@ -1,5 +1,4 @@
 import { Connection, Keypair, SYSVAR_CLOCK_PUBKEY } from '@solana/web3.js'
-import { fileURLToPath } from 'url'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import * as dotenv from 'dotenv'
@@ -15,9 +14,6 @@ const keypairData = process.env.KEEPER_KEYPAIR
 
 const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData))
 const wallet = new Wallet(keypair)
-
-// Handle __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url)
 
 const connection = new Connection(process.env.RPC_URL || '', 'confirmed')
 
@@ -45,6 +41,20 @@ server.listen(PORT, () => {
   console.log(`Socket server is running on ${PORT}`)
 })
 
+function toNumber(value: { toNumber?: () => number } | number): number {
+  return typeof value === 'number' ? value : value.toNumber?.() ?? Number(value)
+}
+
+function hasStatus(status: unknown, expected: string): boolean {
+  if (typeof status === 'string') {
+    return status.toLowerCase() === expected.toLowerCase()
+  }
+
+  return Boolean(status && typeof status === 'object' && expected in status)
+}
+
+let isProcessing = false
+
 /**
  * Periodic keeper job:
  * - Runs every 30 seconds
@@ -56,6 +66,13 @@ server.listen(PORT, () => {
  *   it sends a `draw_winner` instruction.
  */
 async function processRaffles() {
+  if (isProcessing) {
+    console.log('Keeper: previous scan still running, skipping this interval')
+    return
+  }
+
+  isProcessing = true
+
   try {
     // Use on-chain time (block time) so it matches the program's Clock::get().
     const slot = await connection.getSlot()
@@ -69,18 +86,13 @@ async function processRaffles() {
     const raffles = await (program.account as any).raffleAccount.all()
     console.log(`Keeper: found ${raffles.length} raffles to inspect`)
 
-    console.log('status:', raffles[1].account.status)
-    if (raffles[1].account.status > Date.now()) {
-      console.log(true)
-    }
     for (const { publicKey, account } of raffles) {
-      const deadline = account.deadline.toNumber()
-      const status: any = account.status
-      const isDrawing = status && typeof status === 'object' && 'drawing' in status
+      const deadline = toNumber(account.deadline)
+      const isDrawing = hasStatus(account.status, 'drawing')
 
       if (account.participants.length <= 0) {
-        console.log('there is no participants!')
-        return
+        console.log(`Keeper: skipping ${publicKey.toBase58()} because it has no participants`)
+        continue
       }
 
       // Only act on raffles whose deadline has passed and are in Drawing state.
@@ -111,6 +123,8 @@ async function processRaffles() {
     }
   } catch (e) {
     console.error('Keeper: error while processing raffles', e)
+  } finally {
+    isProcessing = false
   }
 }
 
