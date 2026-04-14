@@ -33,16 +33,19 @@ export const CreateRaffle = () => {
         if (!publicKey) {
           throw new Error('Connect your wallet!')
         }
+        if (!itemName.trim() || !itemDescription.trim()) {
+          throw new Error('Item name and description are required!')
+        }
         if (!sellingPrice || !maxTickets || !minTickets || !ticketPrice) {
           throw new Error('Some fields are missing!')
+        }
+        if (deadline <= 0) {
+          throw new Error('Invalid deadline!')
         }
         if (!program?.programId) {
           throw new Error('Program not found!')
         }
         const [counterPda] = PublicKey.findProgramAddressSync([Buffer.from('global-counter')], program.programId)
-        if (!counterPda) {
-          throw new Error('Counter pda not found!')
-        }
         const counterValue = await getCounterValue()
 
         const sellerTokenAccount = await createTokenAccount()
@@ -54,10 +57,6 @@ export const CreateRaffle = () => {
           [Buffer.from('raffle'), publicKey.toBuffer(), counterValue.toArrayLike(Buffer, 'le', 8)],
           program?.programId,
         )
-
-        if (!rafflePda) {
-          throw new Error('Raffle pda not found!')
-        }
         const [escrowPaymentAccount] = PublicKey.findProgramAddressSync(
           [Buffer.from('escrow_payment'), publicKey.toBuffer(), counterValue.toArrayLike(Buffer, 'le', 8)],
           program.programId,
